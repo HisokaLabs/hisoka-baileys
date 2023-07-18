@@ -37,8 +37,7 @@ async function start() {
 
    const hisoka = baileys.default({
       logger: Pino({ level: "fatal" }).child({ level: "fatal" }), // hide log
-      printQRInTerminal: !config.options.mobile, // popping up QR in terminal log
-      mobile: config.options.mobile, // login via otp or via qr, setting up in config.js
+      printQRInTerminal: true, // popping up QR in terminal log
       auth: {
          creds: state.creds,
          keys: makeCacheableSignalKeyStore(state.keys, Pino({ level: "fatal" }).child({ level: "fatal" })),
