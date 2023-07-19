@@ -239,11 +239,11 @@ export default async function Message(hisoka, m, store) {
                     if (!m.isOwner) return m.reply("owner")
                     try {
                         exec(m.text, async (err, stdout) => {
-                            if (err) return m.reply(Func.Format(err))
-                            if (stdout) return m.reply(Func.Format(stdout))
+                            if (err) return m.reply(Func.format(err))
+                            if (stdout) return m.reply(Func.format(stdout))
                         })
                     } catch (e) {
-                        m.reply(Func.Format(e))
+                        m.reply(Func.format(e))
                     }
                 }
         }

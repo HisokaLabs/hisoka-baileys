@@ -40,7 +40,6 @@
     "@adiwajshing/keyed-db": "^0.2.4",
     "axios": "^1.4.0",
     "link-preview-js": "^3.0.4",
-    "sharp": "^0.30.7",
     "qrcode-terminal": "0.12.0"
   }
 }
