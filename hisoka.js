@@ -120,7 +120,7 @@ async function start() {
    hisoka.ev.on("messages.upsert", async (message) => {
       if (!message.messages) return
       const m = await Serialize(hisoka, message.messages[0])
-      await (await import(`./event/message.js?v=${Date.now()}`)).default(hisoka, m, message)
+      await (await import(`./event/message.js?v=${Date.now()}`)).default(hisoka, m, store)
    })
 
    // auto reject call when user call

@@ -15,7 +15,7 @@ import { fileURLToPath } from "url"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-export default async function Message(hisoka, m, chatUpdate) {
+export default async function Message(hisoka, m, store) {
     try {
         if (!m) return
         if (!config.options.public && !m.isOwner) return
