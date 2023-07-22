@@ -1,3 +1,8 @@
+// Note For User
+// Set all settings in the file config.js including the list menu 
+// for others pay to me. jas kiding
+// jangan diperjualbelikan dalam keadaan masih ori hisoka. minimal tambah 5-8 command dulu
+
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
 import config from "./config.js"
 import { Client, Serialize } from "./lib/serialize.js"
@@ -8,7 +13,7 @@ import { Boom } from "@hapi/boom"
 import Pino from "pino"
 import NodeCache from "node-cache"
 
-global.api = (await import("./lib/api.js")).default
+global.api = async (name, options = {}) => new (await import("./lib/api.js")).default(name, options)
 
 const database = (new (await import("./lib/database.js")).default())
 const store = makeInMemoryStore({

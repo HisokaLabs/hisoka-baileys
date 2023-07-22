@@ -1,6 +1,7 @@
 // Note For User
 // Set all settings in the file config.js including the list menu 
 // for others pay to me. jas kiding
+// jangan diperjualbelikan dalam keadaan masih ori hisoka. minimal tambah 5-8 command dulu
 
 import config from "../config.js"
 import Func from "../lib/function.js"
@@ -205,22 +206,45 @@ export default async function Message(hisoka, m, store) {
             }
             break
 
+/* Umm, maybe for download menu  */
+            case "tiktok": case "tt": {
+                if (!/https?:\/\/(www\.|v(t|m|vt)\.|t\.)?tiktok\.com/i.test(m.text)) return m.reply(`Example : ${prefix + command} https://vt.tiktok.com/ZSwWCk5o/`)
+                await m.reply("wait")
+                let req = (await api("rmdni")).get("/dl/tiktok", { url: Func.isUrl(m.text)[0] })
+                if (!req.result.nowm) {
+                    req = (await api("rmdni")).get("/dl/tiktok5", { url: Func.isUrl(m.text)[0] })
+                    for (let url of req.result.download.image) {
+                        m.reply(url)
+                    }
+                } else await m.reply(req?.result?.nowm?.video, { caption: req?.result?.deskripsi })
+            }
+            break
+            case "instagram": case "ig": case "igdl": {
+                if (!/https?:\/\/(www\.)?instagram\.com\/(p|reel|tv|stories|s)/i.test(m.text)) return m.reply(`Example : ${prefix + command} https://www.instagram.com/p/CITVsRYnE9h/`)
+                await m.reply("wait")
+                let req = (await api("rmdni")).get("/dl/instagram", { url: Func.isUrl(m.text)[0] })
+                for (let url of req.result) {
+                    m.reply(url)
+                }
+            }
+            break
+            case "facebook": case "fb": case "fbdl": {
+                if (!/https?:\/\/(fb\.watch|(www\.|web\.|m\.)?facebook\.com)/i.test(m.text)) return m.reply(`Example : ${prefix + command} https://web.facebook.com/100000307683919/videos/266363279245814/`)
+                await m.reply("wait")
+                let req = (await api("rmdni")).get("/dl/facebook", { url: Func.isUrl(m.text)[0] })
+                m.reply(req?.links?.hd || req?.links?.sd, { caption: req?.title })
+            }
+            break
+
+/* Umm, maybe for non command */
             default:
                 // ini eval ya dek
                 if ([">", "eval"].some(a => m.body?.toLowerCase()?.startsWith(a))) {
                     if (!m.isOwner) return m.reply("owner")
-                    const syntaxerror = (await import("syntax-error")).default
                     let evalCmd = ""
-                    let syntaxErr = ""
                     try {
                         evalCmd = /await/i.test(m.text) ? eval("(async() => { " + m.text + " })()") : eval(m.text)
                     } catch (e) {
-                        let err = syntaxerror(m.text, 'EvalError', {
-                            allowReturnOutsideFunction: true,
-                            allowAwaitOutsideFunction: true,
-                            sourceType: "module"
-                        })
-                        if (err) syntaxErr = err
                         evalCmd = e
                     }
                     new Promise(async (resolve, reject) => {
@@ -230,8 +254,8 @@ export default async function Message(hisoka, m, store) {
                             reject(err)
                         }
                     })
-                        ?.then((res) => m.reply(syntaxErr + format(res)))
-                        ?.catch((err) => m.reply(syntaxErr + format(err)))
+                        ?.then((res) => m.reply(format(res)))
+                        ?.catch((err) => m.reply(format(err)))
                 }
 
                 // nah ini baru exec dek

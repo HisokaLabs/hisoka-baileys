@@ -14,10 +14,13 @@
   
 <div align="center"><img width="500" src="./temp/hisoka.jpg"></div>
 
-## Base
+## Pay to Win
 
 This code is an implementation of [Baileys](https://github.com/WhiskeySockets/Baileys).
 Use this script wisely, use your head in utilizing existing technology</br>
+<br>Jangan diperjualbelikan dalam keadaan masih original hisoka. minimal tambah 5-8 command dulu.</br>
+<br>Jangan lupa terimakasih sama admin, kasih star nya 😁</br>
+<br>Butuh saran solusi bisa chat ke wea atau ke tele, kalo lama bales/ga dibales bukannya seleb tapi emang ada kesibukan sendiri.</br>
 
 
 <!-- Installation -->

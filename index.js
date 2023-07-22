@@ -1,3 +1,8 @@
+// Note For User
+// Set all settings in the file config.js including the list menu 
+// for others pay to me. jas kiding
+// jangan diperjualbelikan dalam keadaan masih ori hisoka. minimal tambah 5-8 command dulu
+
 import { spawn } from "child_process"
 import path from "path"
 import { fileURLToPath } from "url"

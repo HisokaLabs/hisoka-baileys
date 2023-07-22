@@ -1,10 +1,16 @@
+// Note For User
+// Set all settings in the file config.js including the list menu 
+// for others pay to me. jas kiding
+// jangan diperjualbelikan dalam keadaan masih ori hisoka. minimal tambah 5-8 command dulu
+
 // setting your list menu on here
 const menu = {
    main: ["help", "speed", "owner", "sc", "ping", "quoted"],
    owner: ["eval", "exec", "mute", "public"],
    convert: ["sticker"],
    group: ["hidetag", "add"],
-   tool: ["fetch"]
+   tool: ["fetch"],
+   download: ["tiktok", "instagram", "facebook"]
 }
 
 const limit = {
@@ -24,9 +30,8 @@ export default {
 
    // Set your URL and API key here
    APIs: {
-      xfarr: {
-         baseURL: 'https://api.openai.com',
-         Key: ''
+      rmdni: {
+         baseURL: 'https://1169.rmdni.id/'
       }
    },
 
