@@ -13,15 +13,15 @@ import { Boom } from "@hapi/boom"
 import Pino from "pino"
 import NodeCache from "node-cache"
 import chalk from "chalk"
+import readline from "readline"
 
 global.api = async (name, options = {}) => new (await import("./lib/api.js")).default(name, options)
 
 const database = (new (await import("./lib/database.js")).default())
-const store = makeInMemoryStore({
-   logger: Pino({ level: "fatal" }).child({ level: "fatal" }),
-})
+const store = makeInMemoryStore({ logger: Pino({ level: "fatal" }).child({ level: "fatal" }) })
 const pairingCode = process.argv.includes("--pairing-code")
-const useMobile = process.argv.includes("--mobile")
+const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
+const question = (text) => new Promise((resolve) => rl.question(text, resolve))
 
 // start connect to client
 async function start() {
@@ -45,7 +45,6 @@ async function start() {
    const hisoka = baileys.default({
       logger: Pino({ level: "fatal" }).child({ level: "fatal" }), // hide log
       printQRInTerminal: !pairingCode, // popping up QR in terminal log
-      mobile: useMobile,
       auth: {
          creds: state.creds,
          keys: makeCacheableSignalKeyStore(state.keys, Pino({ level: "fatal" }).child({ level: "fatal" })),
@@ -76,8 +75,8 @@ async function start() {
    await Client({ hisoka, store })
 
    // login use pairing code
+   // source code https://github.com/WhiskeySockets/Baileys/blob/master/Example/example.ts#L61
    if (pairingCode && !hisoka.authState.creds.registered) {
-      if (useMobile) throw `Can't use pairing ocde with mobile api`
       const phoneNumber = await question(`Please type your WhatsApp number : `)
       let code = await hisoka.requestPairingCode(phoneNumber)
       code = code?.match(/.{1,4}/g)?.join("-") || code
