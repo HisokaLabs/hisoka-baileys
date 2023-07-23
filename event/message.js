@@ -13,10 +13,13 @@ import path from "path"
 import { exec } from "child_process"
 import { format } from "util"
 import { fileURLToPath } from "url"
+import { createRequire } from "module"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const __filename = Func.__filename(import.meta.url)
+const require = createRequire(import.meta.ur)
 
-export default async function Message(hisoka, m, store) {
+export default async function Message(hisoka, m, chatUpdate) {
     try {
         if (!m) return
         if (!config.options.public && !m.isOwner) return
