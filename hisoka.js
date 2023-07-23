@@ -12,6 +12,7 @@ const { useMultiFileAuthState, DisconnectReason, makeInMemoryStore, jidNormalize
 import { Boom } from "@hapi/boom"
 import Pino from "pino"
 import NodeCache from "node-cache"
+import chalk from "chalk"
 
 global.api = async (name, options = {}) => new (await import("./lib/api.js")).default(name, options)
 
@@ -19,7 +20,8 @@ const database = (new (await import("./lib/database.js")).default())
 const store = makeInMemoryStore({
    logger: Pino({ level: "fatal" }).child({ level: "fatal" }),
 })
-
+const pairingCode = process.argv.includes("--pairing-code")
+const useMobile = process.argv.includes("--mobile")
 
 // start connect to client
 async function start() {
@@ -42,7 +44,8 @@ async function start() {
 
    const hisoka = baileys.default({
       logger: Pino({ level: "fatal" }).child({ level: "fatal" }), // hide log
-      printQRInTerminal: true, // popping up QR in terminal log
+      printQRInTerminal: !pairingCode, // popping up QR in terminal log
+      mobile: useMobile,
       auth: {
          creds: state.creds,
          keys: makeCacheableSignalKeyStore(state.keys, Pino({ level: "fatal" }).child({ level: "fatal" })),
@@ -71,6 +74,15 @@ async function start() {
 
    // bind extra client
    await Client({ hisoka, store })
+
+   // login use pairing code
+   if (pairingCode && !hisoka.authState.creds.registered) {
+      if (useMobile) throw `Can't use pairing ocde with mobile api`
+      const phoneNumber = await question(`Please type your WhatsApp number : `)
+      let code = await hisoka.requestPairingCode(phoneNumber)
+      code = code?.match(/.{1,4}/g)?.join("-") || code
+      console.log(chalk.black(chalk.bgGreen(`Your Pairing Code : `)), chalk.black(chalk.bgWhite(code)))
+   }
 
    // for auto restart when error client
    hisoka.ev.on("connection.update", async (update) => {
@@ -129,12 +141,12 @@ async function start() {
    })
 
    // group participants update
-   hisoka.ev.on("group-participants.update", async(message) => {
+   hisoka.ev.on("group-participants.update", async (message) => {
       await (await import(`./event/group-participants.js`)).default(hisoka, message)
    })
 
    // group update
-   hisoka.ev.on("groups.update", async(update) => {
+   hisoka.ev.on("groups.update", async (update) => {
       await (await import(`./event/group-update.js`)).default(hisoka, update)
    })
 

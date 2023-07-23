@@ -95,6 +95,16 @@ npm start
 npm run dev
 ```
 
+Login With Pairing Code
+```sh
+node index.js --pairing-code
+```
+
+Login With Mobile Api
+```sh
+node index.js --mobile
+```
+
 # Note
 
 This code is in no way affiliated with WhatsApp. Use at your own discretion. Don't spam this.

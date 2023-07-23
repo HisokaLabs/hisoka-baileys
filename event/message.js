@@ -207,32 +207,31 @@ export default async function Message(hisoka, m, store) {
             break
 
 /* Umm, maybe for download menu  */
+            // buy key api.xfarr.com on https://api.xfarr.com/pricing
+            
             case "tiktok": case "tt": {
                 if (!/https?:\/\/(www\.|v(t|m|vt)\.|t\.)?tiktok\.com/i.test(m.text)) return m.reply(`Example : ${prefix + command} https://vt.tiktok.com/ZSwWCk5o/`)
                 await m.reply("wait")
-                let req = (await api("rmdni")).get("/dl/tiktok", { url: Func.isUrl(m.text)[0] })
-                if (!req.result.nowm) {
-                    req = (await api("rmdni")).get("/dl/tiktok5", { url: Func.isUrl(m.text)[0] })
-                    for (let url of req.result.download.image) {
+                let req = await (await api("xfarr")).get("/api/download/tiktoknowm", { url: Func.isUrl(m.text)[0] }, "Key")
+                if (req.status !== 200) return m.reply("error")
+                if (/music/g.test(req.result.url)) {
+                    req = await (await api("xfarr")).get("/api/download/tiktokslide", { url: Func.isUrl(m.text)[0] }, "Key")
+                    if (req.status !== 200) return m.reply("error")
+                    for (let url of req.result.url) {
                         m.reply(url)
+                        await Func.sleep(5000) // delay 5 seconds
                     }
-                } else await m.reply(req?.result?.nowm?.video, { caption: req?.result?.deskripsi })
+                } else m.reply(req.result.url, { caption: `${req.result.author}\n\n${req.result.description}` })
             }
             break
             case "instagram": case "ig": case "igdl": {
-                if (!/https?:\/\/(www\.)?instagram\.com\/(p|reel|tv|stories|s)/i.test(m.text)) return m.reply(`Example : ${prefix + command} https://www.instagram.com/p/CITVsRYnE9h/`)
+                if (!/https?:\/\/(www\.)?instagram\.com\/(p|reel|tv)/i.test(m.text)) return m.reply(`Example : ${prefix + command} https://www.instagram.com/p/CITVsRYnE9h/`)
                 await m.reply("wait")
-                let req = (await api("rmdni")).get("/dl/instagram", { url: Func.isUrl(m.text)[0] })
-                for (let url of req.result) {
-                    m.reply(url)
+                let req = await (await api("xfarr")).get("/api/download/instagram", { url: Func.isUrl(m.text)[0] }, "Key")
+                if (req.status !== 200) return m.reply("error")
+                for (let url of req.result.media) {
+                    m.reply(url, { caption: req?.result?.caption })
                 }
-            }
-            break
-            case "facebook": case "fb": case "fbdl": {
-                if (!/https?:\/\/(fb\.watch|(www\.|web\.|m\.)?facebook\.com)/i.test(m.text)) return m.reply(`Example : ${prefix + command} https://web.facebook.com/100000307683919/videos/266363279245814/`)
-                await m.reply("wait")
-                let req = (await api("rmdni")).get("/dl/facebook", { url: Func.isUrl(m.text)[0] })
-                m.reply(req?.links?.hd || req?.links?.sd, { caption: req?.title })
             }
             break
 

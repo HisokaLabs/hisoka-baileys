@@ -30,8 +30,9 @@ export default {
 
    // Set your URL and API key here
    APIs: {
-      rmdni: {
-         baseURL: 'https://1169.rmdni.id/'
+      xfarr: {
+         baseURL: 'https://api.xfarr.com',
+         Key: "buy on https://api.xfarr.com/pricing"
       }
    },
 
