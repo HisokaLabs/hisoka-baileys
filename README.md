@@ -43,16 +43,33 @@ sudo apt update -y && sudo apt upgrade -y
 ```sh
 sudo apt install nodejs git ffmpeg speedtest-cli wget curl -y
 ```
-</details>
-
 
 ### Nvm installation
 
 ```sh
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
-# or
+```
+
+```sh
 wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
 ```
+
+```sh
+source ./bashrc
+```
+
+### Chromium Installation
+
+```sh
+curl -o- https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+```
+```sh
+sudo dpkg -i google-chrome-stable_current_amd64.deb
+```
+```sh
+sudo apt --fix-broken install -y
+```
+
 >
 > After finishing, restart the terminal to load the new information.
 >
@@ -62,6 +79,8 @@ wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
 ```sh
 nvm install node
 ```
+</details>
+
 
 ### pm2 installation
 ```sh
@@ -98,11 +117,6 @@ npm run dev
 Login With Pairing Code
 ```sh
 node index.js --pairing-code
-```
-
-Login With Mobile Api
-```sh
-node index.js --mobile
 ```
 
 # Note

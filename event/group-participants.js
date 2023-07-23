@@ -16,6 +16,7 @@ export default async function GroupParticipants(hisoka, { id, participants, acti
 
          // action
          if (action == "add") {
+            if (!db.groups[id]?.welcome) return
             hisoka.sendMessage(id, {
                text: `Welcome @${jid.split("@")[0]} to "${metadata.subject}"`, contextInfo: {
                   mentionedJid: [jid],
@@ -30,6 +31,7 @@ export default async function GroupParticipants(hisoka, { id, participants, acti
                }
             })
          } else if (action == "remove") {
+            if (!db.groups[id]?.leave) return
             hisoka.sendMessage(id, {
                text: `@${jid.split("@")[0]} Leaving From "${metadata.subject}"`, contextInfo: {
                   mentionedJid: [jid],

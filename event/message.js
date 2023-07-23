@@ -190,6 +190,30 @@ export default async function Message(hisoka, m, chatUpdate) {
                 })
             }
             break
+            case "welcome": {
+                if (!m.isAdmin) return m.reply("admin")
+                let db = global.db.groups[m.from]
+                if (db.welcome) {
+                    db.welcome = false
+                    m.reply("Succes Deactive Welcome on This Group")
+                } else if (!db.welcome) {
+                    db.welcome = true
+                    m.reply("Succes Activated Welcome on This Group")
+                }
+            }
+            break
+            case "leaving": {
+                if (!m.isAdmin) return m.reply("admin")
+                let db = global.db.groups[m.from]
+                if (db.leave) {
+                    db.leave = false
+                    m.reply("Succes Deactive Leaving on This Group")
+                } else if (!db.leave) {
+                    db.leave = true
+                    m.reply("Succes Activated Leaving on This Group")
+                }
+            }
+            break
 
 /* Umm, maybe for tool menu  */
             case "fetch": case "get": {
