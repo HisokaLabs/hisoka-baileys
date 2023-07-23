@@ -19,6 +19,7 @@ global.api = async (name, options = {}) => new (await import("./lib/api.js")).de
 
 const database = (new (await import("./lib/database.js")).default())
 const store = makeInMemoryStore({ logger: Pino({ level: "fatal" }).child({ level: "fatal" }) })
+
 const pairingCode = process.argv.includes("--pairing-code")
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
 const question = (text) => new Promise((resolve) => rl.question(text, resolve))
@@ -168,7 +169,7 @@ async function start() {
    // rewrite database every 30 seconds
    setInterval(async () => {
       if (global.db) await database.write(global.db)
-   }, 30000)
+   }, 30000) // write database every 30 seconds
 
    return hisoka
 }
