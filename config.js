@@ -8,9 +8,9 @@ const menu = {
    main: ["help", "speed", "owner", "sc", "ping", "quoted"],
    owner: ["eval", "exec", "mute", "public"],
    convert: ["sticker"],
-   group: ["hidetag", "add"],
+   group: ["hidetag", "add", "welcome", "leaving"],
    tool: ["fetch"],
-   download: ["tiktok", "instagram", "facebook"]
+   download: ["tiktok", "instagram"]
 }
 
 const limit = {
