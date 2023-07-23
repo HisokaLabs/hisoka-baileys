@@ -241,7 +241,7 @@ export default async function Message(hisoka, m, chatUpdate) {
 /* Umm, maybe for non command */
             default:
                 // ini eval ya dek
-                if ([">", "eval"].some(a => m.body?.toLowerCase()?.startsWith(a))) {
+                if ([">", "eval", "=>"].some(a => m.body?.toLowerCase()?.startsWith(a))) {
                     if (!m.isOwner) return m.reply("owner")
                     let evalCmd = ""
                     try {
@@ -261,7 +261,7 @@ export default async function Message(hisoka, m, chatUpdate) {
                 }
 
                 // nah ini baru exec dek
-                if (["$"].some(a => m.body?.toLowerCase()?.startsWith(a))) {
+                if (["$", "exec"].some(a => m.body?.toLowerCase()?.startsWith(a))) {
                     if (!m.isOwner) return m.reply("owner")
                     try {
                         exec(m.text, async (err, stdout) => {
