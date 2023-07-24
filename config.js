@@ -7,10 +7,12 @@
 const menu = {
    main: ["help", "speed", "owner", "sc", "ping", "quoted"],
    owner: ["eval", "exec", "mute", "public"],
-   convert: ["sticker"],
+   convert: ["sticker", "toimage"],
    group: ["hidetag", "add", "welcome", "leaving"],
-   tool: ["fetch"],
-   download: ["tiktok", "instagram"]
+   tool: ["fetch", "ssweb", "rvo"],
+   download: ["tiktok", "instagram", "facebook", "drive", "imgur", "mediafire", "pinterest", "twitter"],
+   search: ["pinterest", "wikipedia"],
+   islami: ["quran", "nabi"]
 }
 
 const limit = {

@@ -164,6 +164,13 @@ export default async function Message(hisoka, m, chatUpdate) {
                 }
             }
             break
+            case "toimg": case "toimage": {
+                if (!/webp/i.test(quoted.mime)) return m.reply(`Reply Sticker with command ${prefix + command}`)
+                if (quoted.isAnimated) return
+                let media = await quoted.download()
+                await m.reply(media, { mimetype: "image/png" })
+            }
+            break
 
 /* Umm, maybe for group menu  */
             case "hidetag": case "ht": {
@@ -232,6 +239,31 @@ export default async function Message(hisoka, m, chatUpdate) {
                 }
             }
             break
+            case "ss": case "ssweb": {
+                if (!Func.isUrl(m.text)) return m.reply(`Example : ${prefix + command} https://github.com/DikaArdnt`)
+                await m.reply("wait")
+                if (/phone/i.test(m.text)) {
+                    let req = await (await api("xfarr")).get("/api/tools/ssphone", { url: Func.isUrl(m.text)[0] }, "apikey", { responseType: "arraybuffer" })
+                    if (req.status !== 200) return m.reply(req?.message || "error")
+                    await m.reply(req)
+                } else if (/tablet/i.test(m.text)) {
+                    let req = await (await api("xfarr")).get("/api/tools/sstablet", { url: Func.isUrl(m.text)[0] }, "apikey", { responseType: "arraybuffer" })
+                    if (req.status !== 200) return m.reply(req?.message || "error")
+                    await m.reply(req)
+                } else {
+                    let req = await (await api("xfarr")).get("/api/tools/ssdesktop", { url: Func.isUrl(m.text)[0] }, "apikey", { responseType: "arraybuffer" })
+                    if (req.status !== 200) return m.reply(req?.message || "error")
+                    await m.reply(req)
+                }
+            }
+            break
+            // view once so easy bro 🤣
+            case "rvo": {
+                if (!quoted.msg.viewOnce) return m.reply(`Reply view once with command ${prefix + command}`)
+                quoted.msg.viewOnce = false
+                await hisoka.sendMessage(m.from, { forward: quoted }, { quoted: m })
+            }
+            break
 
 /* Umm, maybe for download menu  */
             // buy key api.xfarr.com on https://api.xfarr.com/pricing
@@ -239,11 +271,11 @@ export default async function Message(hisoka, m, chatUpdate) {
             case "tiktok": case "tt": {
                 if (!/https?:\/\/(www\.|v(t|m|vt)\.|t\.)?tiktok\.com/i.test(m.text)) return m.reply(`Example : ${prefix + command} https://vt.tiktok.com/ZSwWCk5o/`)
                 await m.reply("wait")
-                let req = await (await api("xfarr")).get("/api/download/tiktoknowm", { url: Func.isUrl(m.text)[0] }, "Key")
-                if (req.status !== 200) return m.reply("error")
+                let req = await (await api("xfarr")).get("/api/download/tiktoknowm", { url: Func.isUrl(m.text)[0] }, "apikey")
+                if (req.status !== 200) return m.reply(req.message)
                 if (/music/g.test(req.result.url)) {
-                    req = await (await api("xfarr")).get("/api/download/tiktokslide", { url: Func.isUrl(m.text)[0] }, "Key")
-                    if (req.status !== 200) return m.reply("error")
+                    req = await (await api("xfarr")).get("/api/download/tiktokslide", { url: Func.isUrl(m.text)[0] }, "apikey")
+                    if (req.status !== 200) return m.reply(req?.message || "error")
                     for (let url of req.result.url) {
                         m.reply(url)
                         await Func.sleep(5000) // delay 5 seconds
@@ -254,11 +286,113 @@ export default async function Message(hisoka, m, chatUpdate) {
             case "instagram": case "ig": case "igdl": {
                 if (!/https?:\/\/(www\.)?instagram\.com\/(p|reel|tv)/i.test(m.text)) return m.reply(`Example : ${prefix + command} https://www.instagram.com/p/CITVsRYnE9h/`)
                 await m.reply("wait")
-                let req = await (await api("xfarr")).get("/api/download/instagram", { url: Func.isUrl(m.text)[0] }, "Key")
-                if (req.status !== 200) return m.reply("error")
+                let req = await (await api("xfarr")).get("/api/download/instagram", { url: Func.isUrl(m.text)[0] }, "apikey")
+                if (req.status !== 200) return m.reply(req?.message || "error")
                 for (let url of req.result.media) {
                     m.reply(url, { caption: req?.result?.caption })
                 }
+            }
+            break
+            case "facebook": case "fb": case "fbdl": {
+                if (!/https?:\/\/(fb\.watch|(www\.|web\.|m\.)?facebook\.com)/i.test(m.text)) return m.reply(`Example : ${prefix + command} https://www.facebook.com/watch/?v=2018727118289093`)
+                await m.reply("wait")
+                let req = await (await api("xfarr")).get("/api/download/facebook", { url: Func.isUrl(m.text)[0] }, "apikey")
+                if (req.status !== 200) return m.reply(req?.message || "error")
+                await m.reply(req?.result?.url?.hd || req?.result?.url?.sd, { caption: req?.result?.title })
+            }
+            break
+            case "drive": case "gdrive": {
+                if (!/https:\/\/drive\.google\.com\/file\/d\/(.*?)\//i.test(m.text)) return m.reply(`Example : ${prefix + command} https://drive.google.com/file/d/0B_WlBmfJ3KOfdlNyVWwzVzQ1QTQ/view?resourcekey=0-P3IayYTmxJ5d8vSlf-CpUA`)
+                await m.reply("wait")
+                let req = await (await api("xfarr")).get("/api/download/gdrive", { url: Func.isUrl(m.text)[0] }, "apikey")
+                if (req.status !== 200) return m.reply(req?.message || "error")
+                await m.reply(req?.result?.url, { fileName: req?.result?.name, mimetype: req?.result?.mimetype })
+            }
+            break
+            case "imgur": {
+                if (!/https:\/\/imgur\.com\/gallery\//i.test(m.text)) return m.reply(`Example : ${prefix + command} https://imgur.com/gallery/ksnRO`)
+                await m.reply("wait")
+                let req = await (await api("xfarr")).get("/api/download/imgur", { url: Func.isUrl(m.text)[0] }, "apikey")
+                if (req.status !== 200) return m.reply(req?.message || "error")
+                await m.reply(req?.result?.video || req?.result?.image)
+            }
+            break
+            case "mediafire": {
+                if (!/https?:\/\/(www\.)?mediafire\.com\/(file|download)/i.test(m.text)) return m.reply(`Example : ${prefix + command} https://www.mediafire.com/file/96mscj81p92na3r/images+(35).jpeg/file`)
+                await m.reply("wait")
+                let req = await (await api("xfarr")).get("/api/download/mediafire", { url: Func.isUrl(m.text)[0] }, "apikey")
+                if (req.status !== 200) return m.reply(req?.message || "error")
+                await m.reply(req?.result?.link, { fileName: a?.result?.name, mimetype: a?.result?.mime })
+            }
+            break
+            case "pinterest": {
+                if (!m.text) return m.reply(`Example :\n\n1. ${prefix + command} Hisoka\n2. ${prefix + command} https://id.pinterest.com/pin/936748791217202640`)
+                await m.reply("wait")
+                if (/(?:https?:\/\/)?(?:id\.)?(?:pinterest\.com|pin\.it)\/\W*/i.test(m.text)) {
+                    let req = await (await api("xfarr")).get("/api/download/pinterest", { url: Func.isUrl(m.text)[0] }, "apikey")
+                    if (req.status !== 200) return m.reply(req?.message || "error")
+                    await m.reply(req?.result?.[0]?.url)
+                } else {
+                    let req = await (await api("xfarr")).get("/api/search/pinterest", { query: m.text }, "apikey")
+                    if (req.status !== 200) return m.reply(req?.message || "error")
+                    let res = req.result[Math.floor(Math.random() * req.result.length)]
+                    await m.reply(res.image, { caption: res.caption })
+                }
+            }
+            break
+            case "twitter": {
+                if (!/https?:\/\/(www\.)?(twitter|X)\.com\/.*\/status/i.test(m.text)) return m.reply(`Example : ${prefix + command} https://twitter.com/CJDLuffy/status/1683219386595721216?t=EN1LZTURgFYexHISfC3keg&s=19`)
+                await m.reply("wait")
+                let req = await (await api("xfarr")).get("/api/download/twittervideo", { url: Func.isUrl(m.text)[0] }, "apikey")
+                if (req.status !== 200) return m.reply(req?.message || "error")
+                await m.reply(req?.result?.url[0], { caption: req.result.caption })
+            }
+            break
+
+/* Umm, maybe for search menu */
+            case "wiki": case "wikipedia": {
+                if (!m.text) return m.reply(`Example : ${prefix + command} Jokowi`)
+                await m.reply("wait")
+                let req = await (await api("xfarr")).get("/api/search/wiki", { query: m.text }, "apikey")
+                if (req.status !== 200) return m.reply(req?.message || "error")
+                await m.reply(req.result?.[0]?.thumb, { caption: req.result?.[0]?.wiki })
+            }
+            break
+
+/* Umm, maybe for islami menu */
+            case "quran": {
+                if (!Number(m.text)) {
+                    let text = `Example : ${prefix + command} 1\n\n#note\n1 = Al-Fatihah\n\n`
+                    let a = await (await api("xfarr")).get("/api/islami/listsurah", {}, "apikey")
+                    if (a.status == 200) text += a.result.map((r) => `*${r.nomor}.* ${r.nama} (${r.nama_latin}))`).join("------\n\n")
+                    return m.reply(text)
+                }
+                await m.reply("wait")
+                let a = await (await api("xfarr")).get("/api/islami/surah", { nomor: Number(m.text) }, "apikey")
+                let b = await (await api("xfarr")).get("/api/islami/ayat", { nomor: Number(m.text) }, "apikey")
+                if (a.status !== 200) return m.reply("error")
+                let text = `
+${a.result.nama} (${a.result.arti})
+
+*Ayat :* ${a.result.jumlah_ayat}
+*Turun :* ${a.result.tempat_turun}
+
+${a.result.deskripsi}
+
+${b.result.map((r) => `*${r.nomor}.*\n${r.arab}\n\n${r.latin}\n${r.indonesia}`).join("-------\n\n")}
+                `
+                let msg = await m.reply(text)
+                await hisoka.sendMedia(m.from, `${config.APIs.xfarr.baseURL}/api/islami/surahaudio?apikey=${config.APIs.xfarr.Key}&nomor=${Number(m.text)}`, msg, { mimetype: "audio/mpeg" })
+            }
+            break
+            case "nabi": case "kisahnabi": {
+                if (!m.text) return m.reply(`Example : ${prefix + command} muhammad`)
+                await m.reply("wait")
+                let req = await (await api("xfarr")).get("/api/islami/kisahnabi", { nabi: m.text.toLowerCase() }, "apikey")
+                if (req.status !== 200) return m.reply(req?.message || "error")
+                if (req.result.length == 0) return m.reply("notFound")
+                req = req.result[Math.floor(Math.random() * req.result.length)]
+                await m.reply(req?.image_url, { caption: `${req.nabi} (${req.thn_kelahiran})\n\n${req.description}` })
             }
             break
 
