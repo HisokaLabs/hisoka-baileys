@@ -17,7 +17,7 @@ import { createRequire } from "module"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const __filename = Func.__filename(import.meta.url)
-const require = createRequire(import.meta.ur)
+const require = createRequire(import.meta.url)
 
 export default async function Message(hisoka, m, chatUpdate) {
     try {
