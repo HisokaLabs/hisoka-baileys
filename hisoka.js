@@ -8,12 +8,13 @@ import config from "./config.js"
 import { Client, Serialize } from "./lib/serialize.js"
 
 import baileys from "@whiskeysockets/baileys"
-const { useMultiFileAuthState, DisconnectReason, makeInMemoryStore, jidNormalizedUser, makeCacheableSignalKeyStore } = baileys
+const { useMultiFileAuthState, DisconnectReason, makeInMemoryStore, jidNormalizedUser, makeCacheableSignalKeyStore, PHONENUMBER_MCC } = baileys
 import { Boom } from "@hapi/boom"
 import Pino from "pino"
 import NodeCache from "node-cache"
 import chalk from "chalk"
 import readline from "readline"
+import { parsePhoneNumber } from "libphonenumber-js"
 
 global.api = async (name, options = {}) => new (await import("./lib/api.js")).default(name, options)
 
@@ -21,6 +22,8 @@ const database = (new (await import("./lib/database.js")).default())
 const store = makeInMemoryStore({ logger: Pino({ level: "fatal" }).child({ level: "fatal" }) })
 
 const pairingCode = process.argv.includes("--pairing-code")
+const useMobile = process.argv.includes("--mobile")
+
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
 const question = (text) => new Promise((resolve) => rl.question(text, resolve))
 
@@ -78,10 +81,67 @@ async function start() {
    // login use pairing code
    // source code https://github.com/WhiskeySockets/Baileys/blob/master/Example/example.ts#L61
    if (pairingCode && !hisoka.authState.creds.registered) {
-      const phoneNumber = await question(`Please type your WhatsApp number : `)
+      if (useMobile) throw new Error('Cannot use pairing code with mobile api')
+
+      let phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`Please type your WhatsApp number : `)))
+      phoneNumber = phoneNumber.replace(/[^0-9]/g, '')
+
+      // Ask again when entering the wrong number
+      if (!Object.keys(PHONENUMBER_MCC).some(v => phoneNumber.startsWith(v))) {
+         console.log(chalk.bgBlack(chalk.redBright("Start with your country's WhatsApp code, Example : 62xxx")))
+
+         phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`Please type your WhatsApp number : `)))
+         phoneNumber = phoneNumber.replace(/[^0-9]/g, '')
+      }
+
       let code = await hisoka.requestPairingCode(phoneNumber)
       code = code?.match(/.{1,4}/g)?.join("-") || code
       console.log(chalk.black(chalk.bgGreen(`Your Pairing Code : `)), chalk.black(chalk.bgWhite(code)))
+      rl.close()
+   }
+
+   // login with otp (rawan banned kayaknya)
+   // source code https://github.com/WhiskeySockets/Baileys/blob/master/Example/example.ts#L72
+   if (useMobile && !hisoka.authState.creds.registered) {
+      const { registration } = hisoka.authState.creds || { registration: {} }
+
+      if (!registration.phoneNumber) {
+         let phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`Please type your WhatsApp number : `)))
+         phoneNumber = phoneNumber.replace(/[^0-9]/g, '')
+
+         // Ask again when entering the wrong number
+         if (!Object.keys(PHONENUMBER_MCC).some(v => phoneNumber.startsWith(v))) {
+            console.log(chalk.bgBlack(chalk.redBright("Start with your country's WhatsApp code, Example : 62xxx")))
+
+            phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`Please type your WhatsApp number : `)))
+            phoneNumber = phoneNumber.replace(/[^0-9]/g, '')
+         }
+
+         registration.phoneNumber = "+" + phoneNumber
+      }
+
+      const phoneNumber = parsePhoneNumber(registration.phoneNumber)
+      if (!phoneNumber.isValid()) throw new Error('Invalid phone number: ' + registration.phoneNumber)
+
+      registration.phoneNumber = phoneNumber.format("E.164")
+      registration.phoneNumberCountryCode = phoneNumber.countryCallingCode
+      registration.phoneNumberNationalNumber = phoneNumber.nationalNumber
+
+      const mcc = PHONENUMBER_MCC[phoneNumber.countryCallingCode]
+      registration.phoneNumberMobileCountryCode = mcc
+
+      async function enterCode() {
+         try {
+            const code = await question(chalk.bgBlack(chalk.greenBright(`Please Enter Your Otp Code : `)))
+            const response = await hisoka.register(code.replace(/[^0-9]/g, '').trim().toLowerCase())
+            console.log(chalk.bgBlack(chalk.greenBright("Successfully registered your phone number.")))
+            console.log(response)
+            rl.close()
+         } catch (e) {
+            console.error('Failed to register your phone number. Please try again.\n', e)
+            await ask
+         }
+      }
    }
 
    // for auto restart when error client
@@ -125,7 +185,7 @@ async function start() {
 
       if (connection === "open") {
          hisoka.sendMessage(config.options.owner[0] + "@s.whatsapp.net", {
-            text: "Hisoka has Connected...",
+            text: `${hisoka?.user?.name || "Hisoka"} has Connected...`,
          })
       }
    })
@@ -142,12 +202,12 @@ async function start() {
 
    // group participants update
    hisoka.ev.on("group-participants.update", async (message) => {
-      await (await import(`./event/group-participants.js`)).default(hisoka, message)
+      await (await import(`./event/group-participants.js?v=${Date.now()}`)).default(hisoka, message)
    })
 
    // group update
    hisoka.ev.on("groups.update", async (update) => {
-      await (await import(`./event/group-update.js`)).default(hisoka, update)
+      await (await import(`./event/group-update.js?v=${Date.now()}`)).default(hisoka, update)
    })
 
    // auto reject call when user call
