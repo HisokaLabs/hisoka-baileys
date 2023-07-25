@@ -100,50 +100,6 @@ async function start() {
       rl.close()
    }
 
-   // login with otp (rawan banned kayaknya)
-   // source code https://github.com/WhiskeySockets/Baileys/blob/master/Example/example.ts#L72
-   if (useMobile && !hisoka.authState.creds.registered) {
-      const { registration } = hisoka.authState.creds || { registration: {} }
-
-      if (!registration.phoneNumber) {
-         let phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`Please type your WhatsApp number : `)))
-         phoneNumber = phoneNumber.replace(/[^0-9]/g, '')
-
-         // Ask again when entering the wrong number
-         if (!Object.keys(PHONENUMBER_MCC).some(v => phoneNumber.startsWith(v))) {
-            console.log(chalk.bgBlack(chalk.redBright("Start with your country's WhatsApp code, Example : 62xxx")))
-
-            phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`Please type your WhatsApp number : `)))
-            phoneNumber = phoneNumber.replace(/[^0-9]/g, '')
-         }
-
-         registration.phoneNumber = "+" + phoneNumber
-      }
-
-      const phoneNumber = parsePhoneNumber(registration.phoneNumber)
-      if (!phoneNumber.isValid()) throw new Error('Invalid phone number: ' + registration.phoneNumber)
-
-      registration.phoneNumber = phoneNumber.format("E.164")
-      registration.phoneNumberCountryCode = phoneNumber.countryCallingCode
-      registration.phoneNumberNationalNumber = phoneNumber.nationalNumber
-
-      const mcc = PHONENUMBER_MCC[phoneNumber.countryCallingCode]
-      registration.phoneNumberMobileCountryCode = mcc
-
-      async function enterCode() {
-         try {
-            const code = await question(chalk.bgBlack(chalk.greenBright(`Please Enter Your Otp Code : `)))
-            const response = await hisoka.register(code.replace(/[^0-9]/g, '').trim().toLowerCase())
-            console.log(chalk.bgBlack(chalk.greenBright("Successfully registered your phone number.")))
-            console.log(response)
-            rl.close()
-         } catch (e) {
-            console.error('Failed to register your phone number. Please try again.\n', e)
-            await ask
-         }
-      }
-   }
-
    // for auto restart when error client
    hisoka.ev.on("connection.update", async (update) => {
       const { lastDisconnect, connection, qr } = update
