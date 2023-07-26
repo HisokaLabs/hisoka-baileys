@@ -41,7 +41,12 @@ Add to PATH environment variable
 sudo apt update -y && sudo apt upgrade -y
 ```
 ```sh
-sudo apt install nodejs git ffmpeg speedtest-cli wget curl -y
+sudo apt install nodejs git ffmpeg wget curl zip -y
+```
+
+### Speedtest Install
+```sh
+curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | sudo bash && apt install speedtest -y
 ```
 
 ### Nvm installation
@@ -119,11 +124,20 @@ Login With Pairing Code
 node index.js --pairing-code
 ```
 
-# Note
+Login Mobile API
+```sh
+node index.js --mobile
+```
+
+### Note
 
 This code is in no way affiliated with WhatsApp. Use at your own discretion. Don't spam this.
 
 This code was produced based on the baileys library and it is still under development.
+
+For Login Mobile API
+* Not recommended for use, can cause a ban if you are logged in
+* tidak direkomendasikan untuk digunakan, bisa menyebabkan banned jika sudah login
 
 # Donate to the project.
 * [`PayPal`](https://www.paypal.me/Cakhaho)

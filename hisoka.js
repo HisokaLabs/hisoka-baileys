@@ -49,6 +49,7 @@ async function start() {
    const hisoka = baileys.default({
       logger: Pino({ level: "fatal" }).child({ level: "fatal" }), // hide log
       printQRInTerminal: !pairingCode, // popping up QR in terminal log
+      mobile: useMobile, // mobile api (prone to bans)
       auth: {
          creds: state.creds,
          keys: makeCacheableSignalKeyStore(state.keys, Pino({ level: "fatal" }).child({ level: "fatal" })),
@@ -100,7 +101,7 @@ async function start() {
       rl.close()
    }
 
-   // login with otp (rawan banned kayaknya)
+   // login mobile API (prone to bans)
    // source code https://github.com/WhiskeySockets/Baileys/blob/master/Example/example.ts#L72
    if (useMobile && !hisoka.authState.creds.registered) {
       const { registration } = hisoka.authState.creds || { registration: {} }

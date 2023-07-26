@@ -430,6 +430,11 @@ ${b.result.map((r) => `*${r.nomor}.*\n${r.arab}\n\n${r.latin}\n${r.indonesia}`).
                         m.reply(Func.format(e))
                     }
                 }
+
+                // cek bot active or no
+                if (/^bot/i.test(m.body)) {
+                    m.reply(`Bot Activated "${m.pushName}"`)
+                }
         }
     } catch (e) {
         m.reply(format(e))
