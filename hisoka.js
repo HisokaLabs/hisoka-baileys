@@ -64,6 +64,7 @@ async function start() {
          return msg?.message || ""
       },
       msgRetryCounterCache, // Resolve waiting messages
+      defaultQueryTimeoutMs: undefined, // for this issues https://github.com/WhiskeySockets/Baileys/issues/276
    })
    // bind store, write store maybe
    store.bind(hisoka.ev)
