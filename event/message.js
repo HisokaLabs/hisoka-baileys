@@ -224,16 +224,19 @@ export default async function Message(hisoka, m, chatUpdate) {
 
 /* Umm, maybe for tool menu  */
             case "fetch": case "get": {
-                if (!/https:\/\//i.test(m.text)) return m.reply(`No Query?\n\nExample : ${prefix + command} https://api.xfarr.com`)
+                if (!/^https:\/\//i.test(m.text)) return m.reply(`No Query?\n\nExample : ${prefix + command} https://api.xfarr.com`)
                 m.reply("wait")
-                const res = await axios.get(Func.isUrl(m.text)[0])
-                if (!/text|json/.test(res?.headers?.get("content-type"))) {
-                    let a = await Func.fetchBuffer(Func.isUrl(m.text)[0])
-                    return m.reply(a.data, { fileName: a.name, mimetype: a.mime })
+                let mime = (await import("mime-types"))
+                let url = new URL(m.text)
+                const res = await axios.get(url.href, { responseType: "arraybuffer" })
+                if (!/utf-8|json/.test(res?.headers?.get("content-type"))) {
+                    let fileName = /filename/i.test(res.headers?.get("content-disposition")) ? res.headers?.get("content-disposition")?.match(/filename=(.*)/)?.[1]?.replace(/["';]/g, '') : ''
+                    return m.reply(res.data, { fileName, mimetype: mime.lookup(fileName) })
                 }
-                let text = res?.data
+                let text = res?.data?.toString() || res?.data
+                text = format(text)
                 try {
-                    m.reply(format(text))
+                    m.reply(text.slice(0, 65536) + '')
                 } catch (e) {
                     m.reply(format(e))
                 }
@@ -244,15 +247,15 @@ export default async function Message(hisoka, m, chatUpdate) {
                 await m.reply("wait")
                 if (/phone/i.test(m.text)) {
                     let req = await (await api("xfarr")).get("/api/tools/ssphone", { url: Func.isUrl(m.text)[0] }, "apikey", { responseType: "arraybuffer" })
-                    if (req.status !== 200) return m.reply(req?.message || "error")
+                    if (req?.status && req.status !== 200) return m.reply(req?.message || "error")
                     await m.reply(req)
                 } else if (/tablet/i.test(m.text)) {
                     let req = await (await api("xfarr")).get("/api/tools/sstablet", { url: Func.isUrl(m.text)[0] }, "apikey", { responseType: "arraybuffer" })
-                    if (req.status !== 200) return m.reply(req?.message || "error")
+                    if (req?.status && req.status !== 200) return m.reply(req?.message || "error")
                     await m.reply(req)
                 } else {
                     let req = await (await api("xfarr")).get("/api/tools/ssdesktop", { url: Func.isUrl(m.text)[0] }, "apikey", { responseType: "arraybuffer" })
-                    if (req.status !== 200) return m.reply(req?.message || "error")
+                    if (req?.status && req.status !== 200) return m.reply(req?.message || "error")
                     await m.reply(req)
                 }
             }
@@ -348,14 +351,40 @@ export default async function Message(hisoka, m, chatUpdate) {
                 await m.reply(req?.result?.url[0], { caption: req.result.caption })
             }
             break
+            case "ytv": {
+                if (!/(?:https?:\/\/)?(?:youtu\.be\/|(?:www\.|m\.)?(?:music\.)?youtube\.com\/(?:watch|v|embed|shorts))/i.test(m.text)) return m.reply(`Example : ${prefix + command} https://youtu.be/_EYbfKMTpRs`)
+                await m.reply("wait")
+                let req = await (await api("xfarr")).get("/api/download/ytvideo", { url: Func.isUrl(m.text) }, "apikey")
+                if (req.status !== 200) return m.reply(req?.message || "error")
+                await m.reply(req.result.result[0].download, { fileName: req.result.title + ".mp4", mimetype: "video/mp4" })
+            }
+            break
+            case "yta": {
+                if (!/(?:https?:\/\/)?(?:youtu\.be\/|(?:www\.|m\.)?(?:music\.)?youtube\.com\/(?:watch|v|embed|shorts))/i.test(m.text)) return m.reply(`Example : ${prefix + command} https://youtu.be/_EYbfKMTpRs`)
+                await m.reply("wait")
+                let req = await (await api("xfarr")).get("/api/download/ytaudio", { url: Func.isUrl(m.text) }, "apikey")
+                if (req.status !== 200) return m.reply(req?.message || "error")
+                await m.reply(req.result.result[0].download, { fileName: req.result.title + ".mp3", mimetype: "audio/mpeg" })
+            }
+            break
 
-/* Umm, maybe for search menu */
+/* Umm, maybe for education menu */
             case "wiki": case "wikipedia": {
                 if (!m.text) return m.reply(`Example : ${prefix + command} Jokowi`)
                 await m.reply("wait")
-                let req = await (await api("xfarr")).get("/api/search/wiki", { query: m.text }, "apikey")
+                let req = await (await api("xfarr")).get("/api/education/wikipedia", { query: m.text }, "apikey")
                 if (req.status !== 200) return m.reply(req?.message || "error")
                 await m.reply(req.result?.[0]?.thumb, { caption: req.result?.[0]?.wiki })
+            }
+            break
+
+/* Umm, maybe for search menu */
+            case "lirik": case "lyric": {
+                if (!m.text) return m.reply(`Example : ${prefix + command} black rover`)
+                await m.reply("wait")
+                let req = await (await api("xfarr")).get("/api/search/chord", { query: m.text }, "apikey")
+                if (req.status !== 200) return m.reply(req?.message || "error")
+                await m.reply(`${req.result.title}\n\n${req.result.chord}`)
             }
             break
 

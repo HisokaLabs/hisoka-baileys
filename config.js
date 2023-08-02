@@ -10,8 +10,9 @@ const menu = {
    convert: ["sticker", "toimage"],
    group: ["hidetag", "add", "welcome", "leaving"],
    tool: ["fetch", "ssweb", "rvo"],
-   download: ["tiktok", "instagram", "facebook", "drive", "imgur", "mediafire", "pinterest", "twitter"],
-   search: ["pinterest", "wikipedia"],
+   download: ["tiktok", "instagram", "facebook", "drive", "imgur", "mediafire", "pinterest", "twitter", "ytv", "yta"],
+   search: ["pinterest", "lirik"],
+   education: ["wikipedia"],
    islami: ["quran", "nabi"]
 }
 
