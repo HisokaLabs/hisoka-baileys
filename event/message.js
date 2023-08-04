@@ -30,7 +30,7 @@ export default async function Message(hisoka, m, chatUpdate) {
 
         const prefix = m.prefix
         const isCmd = m.body.startsWith(prefix)
-        const command = isCmd ? m.command : ""
+        const command = isCmd ? m.command.toLowerCase() : ""
         const quoted = m.isQuoted ? m.quoted : m
 
         // LOG Chat
