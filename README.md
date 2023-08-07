@@ -119,12 +119,13 @@ npm start
 npm run dev
 ```
 
-Login With Pairing Code
+## Login With Pairing Code
+or type your number in [`here`](https://github.com/Hisoka-Morrou/hisoka-baileys/blob/master/config.js#L50)
 ```sh
 node index.js --pairing-code
 ```
 
-Login Mobile API
+## Login Mobile API
 ```sh
 node index.js --mobile
 ```

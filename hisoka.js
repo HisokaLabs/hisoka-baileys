@@ -3,7 +3,6 @@
 // for others pay to me. jas kiding
 // jangan diperjualbelikan dalam keadaan masih ori hisoka. minimal tambah 5-8 command dulu
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
 import config from "./config.js"
 import { Client, Serialize } from "./lib/serialize.js"
 
@@ -21,7 +20,7 @@ global.api = async (name, options = {}) => new (await import("./lib/api.js")).de
 const database = (new (await import("./lib/database.js")).default())
 const store = makeInMemoryStore({ logger: Pino({ level: "fatal" }).child({ level: "fatal" }) })
 
-const pairingCode = process.argv.includes("--pairing-code")
+const pairingCode = !!config.options.pairingNumber || process.argv.includes("--pairing-code")
 const useMobile = process.argv.includes("--mobile")
 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
@@ -85,21 +84,33 @@ async function start() {
    if (pairingCode && !hisoka.authState.creds.registered) {
       if (useMobile) throw new Error('Cannot use pairing code with mobile api')
 
-      let phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`Please type your WhatsApp number : `)))
-      phoneNumber = phoneNumber.replace(/[^0-9]/g, '')
+      let phoneNumber
+      if (!!config.options.pairingNumber) {
+         phoneNumber = config.options.pairingNumber.replace(/[^0-9]/g, '')
 
-      // Ask again when entering the wrong number
-      if (!Object.keys(PHONENUMBER_MCC).some(v => phoneNumber.startsWith(v))) {
-         console.log(chalk.bgBlack(chalk.redBright("Start with your country's WhatsApp code, Example : 62xxx")))
-
+         if (!Object.keys(PHONENUMBER_MCC).some(v => phoneNumber.startsWith(v))) {
+            console.log(chalk.bgBlack(chalk.redBright("Start with your country's WhatsApp code, Example : 62xxx")))
+            process.exit(0)
+         }
+      } else {
          phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`Please type your WhatsApp number : `)))
          phoneNumber = phoneNumber.replace(/[^0-9]/g, '')
+
+         // Ask again when entering the wrong number
+         if (!Object.keys(PHONENUMBER_MCC).some(v => phoneNumber.startsWith(v))) {
+            console.log(chalk.bgBlack(chalk.redBright("Start with your country's WhatsApp code, Example : 62xxx")))
+
+            phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`Please type your WhatsApp number : `)))
+            phoneNumber = phoneNumber.replace(/[^0-9]/g, '')
+            rl.close()
+         }
       }
 
-      let code = await hisoka.requestPairingCode(phoneNumber)
-      code = code?.match(/.{1,4}/g)?.join("-") || code
-      console.log(chalk.black(chalk.bgGreen(`Your Pairing Code : `)), chalk.black(chalk.bgWhite(code)))
-      rl.close()
+      setTimeout(async () => {
+         let code = await hisoka.requestPairingCode(phoneNumber)
+         code = code?.match(/.{1,4}/g)?.join("-") || code
+         console.log(chalk.black(chalk.bgGreen(`Your Pairing Code : `)), chalk.black(chalk.white(code)))
+      }, 3000)
    }
 
    // login mobile API (prone to bans)
@@ -157,7 +168,7 @@ async function start() {
             await hisoka.requestRegistrationCode(registration)
             await enterCode()
          } catch (e) {
-            console.error('Failed to request registration code. Please try again.\n', error)
+            console.error('Failed to request registration code. Please try again.\n', e)
             await askOTP()
          }
       }
@@ -197,7 +208,7 @@ async function start() {
             process.send('reset')
          } else if (reason === DisconnectReason.multideviceMismatch) {
             console.log("Multi device mismatch, please scan again")
-            platform() === "win32" ? process.kill(process.pid, "SIGINT") : process.kill()
+            process.exit(0)
          } else {
             console.log(reason)
             process.send('reset')

@@ -3,6 +3,7 @@
 // for others pay to me. jas kiding
 // jangan diperjualbelikan dalam keadaan masih ori hisoka. minimal tambah 5-8 command dulu
 
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
 import { spawn } from "child_process"
 import path from "path"
 import { fileURLToPath } from "url"
