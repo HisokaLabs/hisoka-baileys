@@ -267,6 +267,14 @@ export default async function Message(hisoka, m, chatUpdate) {
                 await hisoka.sendMessage(m.from, { forward: quoted }, { quoted: m })
             }
             break
+            case "blackbox": case "aicode": {
+                if (!m.text) return m.reply(`Example : ${m.prefix + m.command} create code html & css for hack NASA`)
+                await m.reply("wait")
+                let req = await (await api("xfarr")).get("/api/ai/blackbox", { chat: m.text }, "apikey")
+                if (req.status !== 200) return m.reply(req.message)
+                await m.reply(req.result)
+            }
+            break
 
 /* Umm, maybe for download menu  */
             // buy key api.xfarr.com on https://api.xfarr.com/pricing

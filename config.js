@@ -9,7 +9,7 @@ const menu = {
    owner: ["eval", "exec", "mute", "public"],
    convert: ["sticker", "toimage"],
    group: ["hidetag", "add", "welcome", "leaving"],
-   tool: ["fetch", "ssweb", "rvo"],
+   tool: ["fetch", "ssweb", "rvo", "blackbox"],
    download: ["tiktok", "instagram", "facebook", "drive", "imgur", "mediafire", "pinterest", "twitter", "ytv", "yta"],
    search: ["pinterest", "lirik"],
    education: ["wikipedia"],
