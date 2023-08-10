@@ -42,7 +42,7 @@ export default async function Message(hisoka, m, chatUpdate) {
             
 /* Umm, maybe for main menu  */
             case "menu": case "help": {
-                let text = `Hi @${m.sender.split`@`[0]}, This is a list of available commands\n\n`
+                let text = `Hi @${m.sender.split`@`[0]}, This is a list of available commands\n\n*Total Command :* ${Object.values(config.menu).map(a => a.length).reduce((total, num) => total + num, 0)}`
 
                 Object.entries(config.menu).map(([type, command]) => {
                     text += `┌──⭓ *${Func.toUpper(type)} Menu*\n`
@@ -275,6 +275,14 @@ export default async function Message(hisoka, m, chatUpdate) {
                 await m.reply(req.result)
             }
             break
+            case "ai": case "chatgpt": case "openai": {
+                if (!m.text) return m.reply(`Example : ${m.prefix + m.command} create code html & css for hack NASA`)
+                await m.reply("wait")
+                let req = await (await api("xfarr")).get("/api/ai/chatgpt", { chat: m.text }, "apikey")
+                if (req.status !== 200) return m.reply(req.message)
+                await m.reply(req.result)
+            }
+            break
 
 /* Umm, maybe for download menu  */
             // buy key api.xfarr.com on https://api.xfarr.com/pricing
@@ -387,12 +395,20 @@ export default async function Message(hisoka, m, chatUpdate) {
             break
 
 /* Umm, maybe for search menu */
-            case "lirik": case "lyric": {
+            case "chord": {
                 if (!m.text) return m.reply(`Example : ${prefix + command} black rover`)
                 await m.reply("wait")
                 let req = await (await api("xfarr")).get("/api/search/chord", { query: m.text }, "apikey")
                 if (req.status !== 200) return m.reply(req?.message || "error")
                 await m.reply(`${req.result.title}\n\n${req.result.chord}`)
+            }
+            break
+            case "lirik": case "lyric": {
+                if (!m.text) return m.reply(`Example : ${prefix + command} black rover`)
+                await m.reply("wait")
+                let req = await (await api("xfarr")).get("/api/search/lirik", { query: m.text }, "apikey")
+                if (req.status !== 200) return m.reply(req?.message || "error")
+                await m.reply(`${req.result.song}\n\n${req.result.lirik}`)
             }
             break
 
@@ -447,6 +463,44 @@ ${b.result.map((r) => `*${r.nomor}.*\n${r.arab}\n\n${r.latin}\n${r.indonesia}`).
                 if (!text2) return m.reply(`Example ${prefix + command} Dika|Ardnt.`)
                 await m.reply("wait")
                 let req = await (await api("xfarr")).get(`/api/textpro/${command}`, { text1, text2 }, "apikey", { responseType: "arraybuffer" })
+                if (req?.status && req.status !== 200) return m.reply(req?.message || "error")
+                await m.reply(req)
+            }
+            break
+
+/* Umm, maybe for ephoto command */
+            case "1917": case "3dhologram": case "3dtexteffect": case "3dtextstyle": case "3dcrack": case "3dcubictext": case "3dgradient": case "3dgradient2": case "3dsand": case "3dshinymetallic": case "3dwoodenlogo": case "3dwoodentext": case "3dchristmas": case "3dbeach": case "3dpapercut": case "3dunderwater": case "aovwallpaper2": case "aovwallpaper3": case "aovwallpaper4": case "aovwallpapers": case "advancedglow": case "americanflag": case "amongus": case "angelwing": case "announcementofwinning": case "aovarena": case "aovbanner": case "avatar3q360": case "avatardota": case "avatarlol": case "avatarlol2": case "blackpink": case "balloontext": case "bannerlol": case "battlefield": case "beautifulgold": case "birthdaycake": case "birthdaycake2": case "birthdaycake3": case "birthdaycake3": case "birthdaycake4": case "blackpinklogo": case "blackpinkneon": case "bloodtext": case "bloodwritingtext": case "bokehtext": case "borderproject": case "csgo": case "csgocover": case "caketext2": case "caketext": case "candytext": case "capercut": case "cardshalloween": case "chocolate": case "christmasball": case "christmasnewyear2": case "christmaseffect": case "christmasnewyear": case "christmasseason": case "christmassnow": case "christmasvideo": case "chrometext": case "cloudtext": case "coffee": case "colortext": case "colorfulglowing": case "colorfultext": case "covergraffiti": case "createwater": case "createtext": case "crossfire": case "crossfirecover": case "cyberhunter": case "dance": case "darkgreentypography": case "diamondtext": case "dota2cover": case "doubleexposure": case "dragonball": case "dragonsteel": case "embroider": case "fabrictext": case "firetext": case "firework": case "firework": case "flamelettering": case "foggyrainy": case "freefire": case "freefireavatar": case "freefirefb": case "funnyminion": case "galaxy": case "galaxytext": case "gemstone": case "generalexamcrank": case "glittergold": case "glossychrome": case "goldbutton": case "goldpurple": case "goldtext": case "goldtext2": case "goldtextgenerators": case "goldtext3": case "graffititext": case "graffititext5": case "graffiticolor": case "graffitilettering": case "greenbrush": case "greenneon": case "halloween": case "halloweenbatstext": case "halloweenfire": case "halloweenvideo": case "heart": case "heartcup": case "hollywoodwalk": case "horrorcemeterygate": case "icetext": case "joker": case "jeanfabric": case "jewel": case "lok(aov)": case "lolpentakill": case "leagueofangels": case "leagueofking": case "leagueofkings": case "ligaturesfromleaves": case "lighteffects": case "lol": case "logoastronaut": case "lolavatar": case "lolbanner": case "lolcover": case "lolfb": case "lolwp": case "lolwp2": case "lovecard": case "luxurylogo": case "magictext": case "matrixtext": case "merrychristmas": case "metal": case "metalavatar": case "metalmascots": case "metalblue": case "metallogo": case "metalstartext": case "metaltext": case "metallic": case "milkcaketext": case "minimallogo": case "mobilelegendswallpaper": case "moderngold": case "moderngoldred": case "moderngoldsilver": case "moderngold3": case "moderngold4": case "moderngold5": case "musicequalizer": case "nationalflag": case "neonlight": case "neontext": case "neontext3": case "neontextlight": case "neondevilwings": case "newyear": case "nigeriaflag": case "noel": case "onepiece": case "overwatchcover": case "overwatchwallpaper": case "overwatchhero": case "pubgbirthday": case "pubglogo2": case "pubglogo3": case "pubgchar": case "pubgcover": case "pubgfb": case "pubgglitch": case "pubglogo": case "pubgteam": case "paintsplatter": case "party": case "plasmatexteffects": case "purpletext": case "retrotext": case "roadpaint": case "royaltext": case "santaclaus": case "shadowtext": case "snake": case "snowontext": case "starwars": case "starsnight": case "starsnight2": case "summerbeach2": case "sunlightshadow": case "teamlogo": case "teamfighttactics": case "textgalaxy": case "textgraffiti3d": case "texthalloween": case "texthalloween2": case "textheartflashlight": case "textlight": case "textcake": case "textchristmas": case "textmetal": case "textoncloth": case "thundertext": case "typography": case "underwatertext": case "valentinesday": case "warface": case "water3dtext": case "watertext": case "wingsgalaxy": case "wingstext": case "wooden3d": case "writegalaxy": case "writegalaxy2": case "writegoldletters": case "writingblackboard": case "yasuologo": case "zodiac": case "zombie3d": case "angelwings": case "animationsbear": case "anonymoushacker": case "avataraov": case "avatarrov": case "avatargold": case "balloon": case "bear": case "birthdaycake3": case "birthdaycards": case "birthdayfoilballoon": case "brokenglass": case "cakes": case "cartoongraffiti": case "chalkontheblackboard": case "chocolate2": case "cloudsinthesky": case "colorfulangel": case "covercf": case "coverlol": case "deleting": case "digitalglitch": case "digitaltiger": case "facebook": case "foggyglass": case "football": case "galaxylogo": case "gaminglogo": case "gaminglogofps": case "girlgamer": case "glass": case "glowingtext": case "goldletters": case "graffitiletters": case "happywomensday": case "horrorletters": case "horrortext": case "impressiveleaves": case "inthesky": case "incandescentbulbs": case "leafautumn": case "lettersontheleaves": case "lightgalaxy": case "lightsignatures": case "logointro": case "logoteam": case "lolavatar2": case "luxurygold": case "mascotlogo": case "maskotteamlogo": case "mechanical": case "metalborder": case "metalliceffect": case "namesonthesand": case "nature": case "neonglitch": case "neonblue": case "neonlogo": case "newyearvideo": case "papercut": case "pavement": case "personalizedqueen": case "pig": case "pixelglitch": case "puppycute": case "realisticcloud": case "realisticembroidery": case "rotationlogo": case "ruby​​stone": case "signatureattachment": case "silvertext": case "snow3d": case "summerbeach": case "summerysand": case "sweetlove": case "tattoosignature": case "tattoos": case "technology": case "texteffectsnight": case "tmaker": case "vibrantfireworks": case "vintagetelevision": case "wallpapermobile": case "warningsign": case "watercolor": case "womensday": case "wordgreenflares": case "wordgreenlight": case "zodiacwallpaper": {
+                if (!m.text) return m.reply(`Example : ${prefix + command} Dika Ardnt.`)
+                await m.reply("wait")
+                let req = await (await api("xfarr")).get(`/api/ephoto360/${command}`, { text: m.text }, "apikey", { responseType: "arraybuffer" })
+                if (req?.status && req.status !== 200) return m.reply(req?.message || "error")
+                await m.reply(req)
+            }
+            break
+            case "3dstone": case "3dlightbulb": case "3dwood": case "amongusbanner": case "apexlegend": case "barcashirt": case "callofduty": case "captainamerica": case "companylogo": case "companylogo2": case "floralluxury": case "footballlogo": case "glitter": case "juventusshirt": case "latestspace3d": case "letters": case "logo3dmetal": case "lolytbanner": case "lovelyfloral": case "marvels": case "metalliccover": case "neontext2": case "overwatchavatar": case "overwatchytbanner": case "pubglogo": case "pubgytbanner": case "polygonlogo": case "pornhub": case "premierleaguecup": case "quotesimages": case "shirtrealmadrid": case "steeltext": case "tiktok": case "writestatus": case "balloonslove": case "banneraov": case "blackandwhite": case "classlogo": case "footballshirtmessi": case "girlgraffiti": case "gradientlogo": case "graffitithewall": case "impressiveanime": case "letterlogos": case "logoavengers": case "logowolf": case "logoaccording": case "logogaming": case "logomascot": case "loveballoons": case "metallicglass": case "pencilsketch": case "shirtfootball": case "steellettering": {
+                let [text1, text2] = m.text.split("|")
+                if (!text2) return m.reply(`Example ${prefix + command} Dika|Ardnt.`)
+                await m.reply("wait")
+                let req = await (await api("xfarr")).get(`/api/textpro/${command}`, { text1, text2 }, "apikey", { responseType: "arraybuffer" })
+                if (req?.status && req.status !== 200) return m.reply(req?.message || "error")
+                await m.reply(req)
+            }
+            break
+
+/* Umm, maybe for photooxy command */
+            case "3dglowing": case "3dnature": case "3drainbow": case "3dsummer": case "3dwoodblack": case "between": case "birthdaycake": case "blackpink": case "burnpaper": case "butterfly": case "candy": case "carvedwood": case "coffeecup": case "coffeecup2": case "crisp": case "crossfire": case "csgo": case "cup": case "cupsmile": case "fabric": case "flaming": case "flowerheart": case "flowertypography": case "fur": case "glowrainbow": case "gradient": case "graffiti": case "greenleaves": case "harrypotter": case "hellokitty": case "leaves": case "lovepicture": case "lovetext": case "luxury": case "metallicglow": case "modernmetal": case "multimaterial": case "naruto": case "naturetypography": case "neondarkmetal": case "neonglow": case "neonmetallic": case "nightsky": case "partyneon": case "poly": case "raindrops": case "rainbowshine": case "romanticlove": case "scary": case "shadowtext": case "silk": case "skriking3d": case "smoke": case "smoketypography": case "sweetcandy": case "underfall": case "underflower": case "undergrass": case "undermatrix": case "underwhite": case "underwater": case "vintage": case "warface": case "watermelon": case "whitestone": case "wolfmetal": case "woodheart": case "woodenboards": case "yellowroses": {
+                if (!m.text) return m.reply(`Example : ${prefix + command} Dika Ardnt.`)
+                await m.reply("wait")
+                let req = await (await api("xfarr")).get(`/api/photooxy/${command}`, { text: m.text }, "apikey", { responseType: "arraybuffer" })
+                if (req?.status && req.status !== 200) return m.reply(req?.message || "error")
+                await m.reply(req)
+            }
+            break
+            case "arcade8-bit": case "battlefield4rising": case "glitchtiktok": case "pubg": case "google": {
+                let [text1, text2] = m.text.split("|")
+                if (!text2) return m.reply(`Example ${prefix + command} Dika|Ardnt.`)
+                await m.reply("wait")
+                let req = await (await api("xfarr")).get(`/api/photooxy/${command}`, { text1, text2 }, "apikey", { responseType: "arraybuffer" })
                 if (req?.status && req.status !== 200) return m.reply(req?.message || "error")
                 await m.reply(req)
             }
