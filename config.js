@@ -36,7 +36,7 @@ export default {
    APIs: {
       xfarr: {
          baseURL: 'https://api.xfarr.com',
-         Key: "buy on https://api.xfarr.com/pricing"
+         Key: "halahhisoka"
       }
    },
 
