@@ -7,7 +7,7 @@
 const menu = {
    main: ["help", "speed", "owner", "sc", "ping", "quoted"],
    owner: ["eval", "exec", "mute", "public"],
-   convert: ["sticker", "toimage"],
+   convert: ["s", "toimage"],
    group: ["hidetag", "add", "welcome", "leaving"],
    tool: ["fetch", "ssweb", "rvo", "blackbox", "ai"],
    download: ["tiktok", "instagram", "facebook", "drive", "imgur", "mediafire", "pinterest", "twitter", "ytv", "yta"],
@@ -38,7 +38,7 @@ export default {
    APIs: {
       xfarr: {
          baseURL: 'https://api.xfarr.com',
-         Key: "buy on https://api.xfarr.com/pricing"
+         Key: "dFdBYhkSNi https://api.xfarr.com/pricing"
       }
    },
 
@@ -47,17 +47,17 @@ export default {
       public: true,
       antiCall: true, // reject call
       database: "database.json", // End .json when using JSON database or use Mongo URI
-      owner: ["6288292024190"], // set owner number on here
+      owner: ["628984451463"], // set owner number on here
       sessionName: "session", // for name session
-      prefix: /^[°•π÷×¶∆£¢€¥®™+✓_=|/~!?@#%^&.©^]/i,
+      prefix: /^[.]/i,
       pairingNumber: "" // Example Input : 62xxx
    },
 
    // Set pack name sticker on here
    Exif: {
       packId: "https://dikaardnt.my.id",
-      packName: `Sticker Ini Dibuat Oleh :`,
-      packPublish: "Dika Ardnt.",
+      packName: `Sticker Ini Dibuat Oleh :WanBOT`,
+      packPublish: "WanBOT.",
       packEmail: "okeae2410@gmail.com",
       packWebsite: "https://dikaardnt.my.id",
       androidApp: "https://play.google.com/store/apps/details?id=com.bitsmedia.android.muslimpro",
