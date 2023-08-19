@@ -14,6 +14,8 @@ import NodeCache from "node-cache"
 import chalk from "chalk"
 import readline from "readline"
 import { parsePhoneNumber } from "libphonenumber-js"
+import open from "open"
+import path from "path"
 
 global.api = async (name, options = {}) => new (await import("./lib/api.js")).default(name, options)
 
@@ -53,7 +55,7 @@ async function start() {
          creds: state.creds,
          keys: makeCacheableSignalKeyStore(state.keys, Pino({ level: "fatal" }).child({ level: "fatal" })),
       },
-      browser: ['Hisoka', 'Chrome', '1.0.0'], // Do not change options 2 and 3 carelessly
+      browser: ['Chrome (Linux)', '', ''], // for this issues https://github.com/WhiskeySockets/Baileys/issues/328
       markOnlineOnConnect: true, // set false for offline
       generateHighQualityLinkPreview: true, // make high preview link
       getMessage: async (key) => {
@@ -156,19 +158,35 @@ async function start() {
          }
       }
 
+      // from this : https://github.com/WhiskeySockets/Baileys/blob/master/Example/example.ts#L110
+      async function enterCaptcha() {
+         const response = await sock.requestRegistrationCode({ ...registration, method: 'captcha' })
+         const pathFile = path.join(process.cwd(), "temp", "captcha.png")
+         fs.writeFileSync(pathFile, Buffer.from(response.image_blob, 'base64'))
+         await open(pathFile)
+         const code = await question(chalk.bgBlack(chalk.greenBright(`Please Enter Your Captcha Code : `)))
+         fs.unlinkSync(pathFile)
+         registration.captcha = code.replace(/["']/g, '').trim().toLowerCase()
+      }
+
       async function askOTP() {
-         let code = await question(chalk.bgBlack(chalk.greenBright('What method do you want to use? "sms" or "voice"')))
-         code = code.replace(/["']/g, '').trim().toLowerCase()
+         if (!registration.method) {
+            let code = await question(chalk.bgBlack(chalk.greenBright('What method do you want to use? "sms" or "voice" : ')))
+            code = code.replace(/["']/g, '').trim().toLowerCase()
 
-         if (code !== 'sms' && code !== 'voice') return await askOTP()
+            if (code !== 'sms' && code !== 'voice') return await askOTP()
 
-         registration.method = code
+            registration.method = code
+         }
 
          try {
             await hisoka.requestRegistrationCode(registration)
             await enterCode()
          } catch (e) {
             console.error('Failed to request registration code. Please try again.\n', e)
+            if (e?.reason === 'code_checkpoint') {
+               await enterCaptcha()
+            }
             await askOTP()
          }
       }
