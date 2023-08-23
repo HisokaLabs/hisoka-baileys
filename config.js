@@ -6,9 +6,9 @@
 // setting your list menu on here
 const menu = {
    main: ["help", "speed", "owner", "sc", "ping", "quoted"],
-   owner: ["eval", "exec", "mute", "public"],
+   owner: ["eval", "exec", "mute", "public", "setprofile", "setname"],
    convert: ["sticker", "toimage"],
-   group: ["hidetag", "add", "welcome", "leaving"],
+   group: ["hidetag", "add", "welcome", "leaving", "setprofile", "setname", "linkgroup"],
    tool: ["fetch", "ssweb", "rvo", "blackbox", "ai"],
    download: ["tiktok", "instagram", "facebook", "drive", "imgur", "mediafire", "pinterest", "twitter", "ytv", "yta"],
    search: ["pinterest", "lirik", "chord"],

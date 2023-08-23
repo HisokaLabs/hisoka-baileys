@@ -36,6 +36,37 @@ Add to PATH environment variable
 ```
 </details>
 
+<b><details><summary>Termux</summary></b>
+```sh
+apt update && apt upgrade -y
+```
+```sh
+apt install nodejs git ffmpeg wget curl zip -y
+```
+```sh
+apt install libvips binutils build-essential -y
+```
+
+### Speedtest Install
+```sh
+curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | bash && apt install speedtest -y
+```
+
+### Nvm installation
+
+```sh
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+```
+
+```sh
+wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+```
+
+```sh
+source ~/.bashrc
+```
+</details>
+
 <b><details><summary>Ubuntu</summary></b>
 ```sh
 sudo apt update -y && sudo apt upgrade -y
