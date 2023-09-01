@@ -10,6 +10,7 @@ import fs from "fs"
 import chalk from "chalk"
 import axios from "axios"
 import path from "path"
+import { getBinaryNodeChildren } from "@whiskeysockets/baileys"
 import { exec } from "child_process"
 import { format } from "util"
 import { fileURLToPath } from "url"
@@ -42,7 +43,7 @@ export default async function Message(hisoka, m, chatUpdate) {
 
             /* Umm, maybe for main menu  */
             case "menu": case "help": {
-                let text = `Hi @${m.sender.split`@`[0]}, This is a list of available commands\n\n*Total Command :* ${Object.values(config.menu).map(a => a.length).reduce((total, num) => total + num, 0)}`
+                let text = `Hi @${m.sender.split`@`[0]}, This is a list of available commands\n\n*Total Command :* ${Object.values(config.menu).map(a => a.length).reduce((total, num) => total + num, 0)}\n\n`
 
                 Object.entries(config.menu).map(([type, command]) => {
                     text += `┌──⭓ *${Func.toUpper(type)} Menu*\n`
@@ -66,7 +67,7 @@ export default async function Message(hisoka, m, chatUpdate) {
                     }
                 }, { quoted: m })
             }
-                break
+            break
             case "speed": {
                 const { promisify } = (await import("util"))
                 const cp = (await import("child_process")).default
@@ -83,15 +84,15 @@ export default async function Message(hisoka, m, chatUpdate) {
                     if (stderr) return m.reply(stderr)
                 }
             }
-                break
+            break
             case "owner": {
                 hisoka.sendContact(m.from, config.options.owner, m)
             }
-                break
+            break
             case "sc": {
                 m.reply("https://github.com/Hisoka-Morrou/hisoka-baileys")
             }
-                break
+            break
             case "ping": {
                 const moment = (await import("moment-timezone")).default
                 const calculatePing = function (timestamp, now) {
@@ -99,19 +100,19 @@ export default async function Message(hisoka, m, chatUpdate) {
                 }
                 m.reply(`*Ping :* *_${calculatePing(m.timestamp, Date.now())} second(s)_*`)
             }
-                break
+            break
             case "quoted": case "q": {
                 const { Serialize } = (await import("../lib/serialize.js"))
                 if (!m.isQuoted) m.reply("quoted")
                 try {
                     const message = await Serialize(hisoka, (await hisoka.loadMessage(m.from, m.quoted.id)))
                     if (!message.isQuoted) return m.reply("Quoted Not Found 🙄")
-                    hisoka.sendMessage(m.from, { forward: message })
+                    hisoka.sendMessage(m.from, { forward: message.quoted })
                 } catch {
                     m.reply("Quoted Not Found 🙄")
                 }
             }
-                break
+            break
 
             /* Umm, maybe for owner menu  */
             case "public": {
@@ -124,7 +125,7 @@ export default async function Message(hisoka, m, chatUpdate) {
                     m.reply('Switch Bot To Public Mode')
                 }
             }
-                break
+            break
             case "mute": {
                 if (!m.isOwner) return m.reply("owner")
                 let db = global.db.groups[m.from]
@@ -136,7 +137,7 @@ export default async function Message(hisoka, m, chatUpdate) {
                     m.reply("Succes Mute This Group")
                 }
             }
-                break
+            break
             case "setpp": case "setprofile": case "seticon": {
                 if (m.isOwner && !m.isGroup) {
                     if (/full/i.test(m.text)) await hisoka.setProfilePicture(hisoka?.user?.id, media, "full")
@@ -148,7 +149,7 @@ export default async function Message(hisoka, m, chatUpdate) {
                     else await hisoka.setProfilePicture(m.from, media, "normal")
                 }
             }
-                break
+            break
             case "setname": {
                 if (m.isOwner && !m.isGroup) {
                     await hisoka.updateProfileName(m.isQuoted ? quoted.body : quoted.text)
@@ -156,7 +157,7 @@ export default async function Message(hisoka, m, chatUpdate) {
                     await hisoka.groupUpdateSubject(m.from, m.isQuoted ? quoted.body : quoted.text)
                 }
             }
-                break
+            break
 
             /* Umm, maybe for convert menu  */
             case "sticker": case "s": case "stiker": {
@@ -183,14 +184,18 @@ export default async function Message(hisoka, m, chatUpdate) {
                     m.reply(`Method Not Support`)
                 }
             }
-                break
+            break
             case "toimg": case "toimage": {
+                let { webp2mp4File } = (await import("../lib/sticker.js"))
                 if (!/webp/i.test(quoted.mime)) return m.reply(`Reply Sticker with command ${prefix + command}`)
-                if (quoted.isAnimated) return
+                if (quoted.isAnimated) {
+                    let media = await webp2mp4File((await quoted.download()))
+                    await m.reply(media)
+                }
                 let media = await quoted.download()
                 await m.reply(media, { mimetype: "image/png" })
             }
-                break
+            break
 
             /* Umm, maybe for group menu  */
             case "hidetag": case "ht": {
@@ -200,7 +205,7 @@ export default async function Message(hisoka, m, chatUpdate) {
                 let mod = await hisoka.cMod(m.from, quoted, /hidetag|tag|ht|h|totag/i.test(quoted.body.toLowerCase()) ? quoted.body.toLowerCase().replace(prefix + command, "") : quoted.body)
                 hisoka.sendMessage(m.from, { forward: mod, mentions })
             }
-                break
+            break
             case "add": case "+": {
                 if (!m.isGroup) return m.reply("group")
                 if (!m.isAdmin) return m.reply("admin")
@@ -208,15 +213,20 @@ export default async function Message(hisoka, m, chatUpdate) {
                 let users = m.mentions.length !== 0 ? m.mentions.slice(0, 2) : m.isQuoted ? [m.quoted.sender] : m.text.split(",").map(v => v.replace(/[^0-9]/g, '') + "@s.whatsapp.net").slice(0, 2)
                 if (users.length == 0) return m.reply('Fuck You 🖕')
                 await hisoka.groupParticipantsUpdate(m.from, users, "add")
-                    .then((res) => {
+                    .then(async (res) => {
                         for (let i of res) {
-                            if (i.status == 403) return m.reply(`Unable to add @${i.jid.split`@`[0]}, may be privacy`)
+                            if (i.status == 403) {
+                                let node = getBinaryNodeChildren(i.content, "add_request")
+                                await m.reply(`Can't add @${i.jid.split('@')[0]}, send invitation...`)
+                                let url = await hisoka.profilePictureUrl(m.from, "image").catch(_ => "https://lh3.googleusercontent.com/proxy/esjjzRYoXlhgNYXqU8Gf_3lu6V-eONTnymkLzdwQ6F6z0MWAqIwIpqgq_lk4caRIZF_0Uqb5U8NWNrJcaeTuCjp7xZlpL48JDx-qzAXSTh00AVVqBoT7MJ0259pik9mnQ1LldFLfHZUGDGY=w1200-h630-p-k-no-nu")
+                                await hisoka.sendGroupV4Invite(i.jid, m.from, node[0]?.attrs?.code || node.attrs.code, node[0]?.attrs?.expiration || node.attrs.expiration, m.metadata.subject, url, "Invitation to join my WhatsApp Group")
+                            }
                             else if (i.status == 409) return m.reply(`@${i.jid?.split('@')[0]} already in this group`)
                             else m.reply(Func.format(i))
                         }
                     })
             }
-                break
+            break
             case "welcome": {
                 if (!m.isAdmin) return m.reply("admin")
                 let db = global.db.groups[m.from]
@@ -228,7 +238,7 @@ export default async function Message(hisoka, m, chatUpdate) {
                     m.reply("Succes Activated Welcome on This Group")
                 }
             }
-                break
+            break
             case "leaving": {
                 if (!m.isAdmin) return m.reply("admin")
                 let db = global.db.groups[m.from]
@@ -240,23 +250,22 @@ export default async function Message(hisoka, m, chatUpdate) {
                     m.reply("Succes Activated Leaving on This Group")
                 }
             }
-                break
+            break
             case "linkgroup": case "linkgrup": case "linkgc": {
                 if (!m.isGroup) return m.reply("group")
                 if (!m.isAdmin) return m.reply("admin")
                 if (!m.isBotAdmin) return m.reply("botAdmin")
                 await m.reply("https://chat.whatsapp.com/" + (await hisoka.groupInviteCode(m.from)))
             }
-                break
+            break
 
             /* Umm, maybe for tool menu  */
             case "fetch": case "get": {
                 if (!/^https:\/\//i.test(m.text)) return m.reply(`No Query?\n\nExample : ${prefix + command} https://api.xfarr.com`)
                 m.reply("wait")
                 let mime = (await import("mime-types"))
-                let url = new URL(m.text)
-                const res = await axios.get(url.href, { responseType: "arraybuffer" })
-                if (!/utf-8|json/.test(res?.headers?.get("content-type"))) {
+                const res = await axios.get(Func.isUrl(m.text)[0], { responseType: "arraybuffer" })
+                if (!/utf-8|json|html|plain/.test(res?.headers?.get("content-type"))) {
                     let fileName = /filename/i.test(res.headers?.get("content-disposition")) ? res.headers?.get("content-disposition")?.match(/filename=(.*)/)?.[1]?.replace(/["';]/g, '') : ''
                     return m.reply(res.data, { fileName, mimetype: mime.lookup(fileName) })
                 }
@@ -268,7 +277,7 @@ export default async function Message(hisoka, m, chatUpdate) {
                     m.reply(format(e))
                 }
             }
-                break
+            break
             case "ss": case "ssweb": {
                 if (!Func.isUrl(m.text)) return m.reply(`Example : ${prefix + command} https://github.com/DikaArdnt`)
                 await m.reply("wait")
@@ -286,14 +295,14 @@ export default async function Message(hisoka, m, chatUpdate) {
                     await m.reply(req)
                 }
             }
-                break
+            break
             // view once so easy bro 🤣
             case "rvo": {
                 if (!quoted.msg.viewOnce) return m.reply(`Reply view once with command ${prefix + command}`)
                 quoted.msg.viewOnce = false
                 await hisoka.sendMessage(m.from, { forward: quoted }, { quoted: m })
             }
-                break
+            break
             case "blackbox": case "aicode": {
                 if (!m.text) return m.reply(`Example : ${m.prefix + m.command} create code html & css for hack NASA`)
                 await m.reply("wait")
@@ -301,7 +310,7 @@ export default async function Message(hisoka, m, chatUpdate) {
                 if (req.status !== 200) return m.reply(req.message)
                 await m.reply(req.result)
             }
-                break
+            break
             case "ai": case "chatgpt": case "openai": {
                 if (!m.text) return m.reply(`Example : ${m.prefix + m.command} create code html & css for hack NASA`)
                 await m.reply("wait")
@@ -309,7 +318,23 @@ export default async function Message(hisoka, m, chatUpdate) {
                 if (req.status !== 200) return m.reply(req.message)
                 await m.reply(req.result)
             }
-                break
+            break
+            case "diffusion": case "diff": {
+                if (!m.text) return m.reply(`Example : ${m.prefix + m.command} beautiful, aesthetic, mountain, river, trees`)
+                await m.reply("wait")
+                let req = await (await api("xfarr")).get("/api/ai/stablediff", { prompt: m.text }, "apikey", { responseType: "arraybuffer" })
+                if (req?.status && req.status !== 200) return m.reply(req?.message || "error")
+                await m.reply(req)
+            }
+            break
+            case "animediffusion": case "animediff": {
+                if (!m.text) return m.reply(`Example : ${m.prefix + m.command} cat, kawai, moe, tatsumaki, one punch man`)
+                await m.reply("wait")
+                let req = await (await api("xfarr")).get("/api/ai/animediff", { prompt: m.text }, "apikey", { responseType: "arraybuffer" })
+                if (req?.status && req.status !== 200) return m.reply(req?.message || "error")
+                await m.reply(req)
+            }
+            break
 
             /* Umm, maybe for download menu  */
             // buy key api.xfarr.com on https://api.xfarr.com/pricing
@@ -328,7 +353,7 @@ export default async function Message(hisoka, m, chatUpdate) {
                     }
                 } else m.reply(req.result.url, { caption: `${req.result.author}\n\n${req.result.description}` })
             }
-                break
+            break
             case "instagram": case "ig": case "igdl": {
                 if (!/https?:\/\/(www\.)?instagram\.com\/(p|reel|tv)/i.test(m.text)) return m.reply(`Example : ${prefix + command} https://www.instagram.com/p/CITVsRYnE9h/`)
                 await m.reply("wait")
@@ -338,7 +363,7 @@ export default async function Message(hisoka, m, chatUpdate) {
                     m.reply(url, { caption: req?.result?.caption })
                 }
             }
-                break
+            break
             case "facebook": case "fb": case "fbdl": {
                 if (!/https?:\/\/(fb\.watch|(www\.|web\.|m\.)?facebook\.com)/i.test(m.text)) return m.reply(`Example : ${prefix + command} https://www.facebook.com/watch/?v=2018727118289093`)
                 await m.reply("wait")
@@ -346,7 +371,7 @@ export default async function Message(hisoka, m, chatUpdate) {
                 if (req.status !== 200) return m.reply(req?.message || "error")
                 await m.reply(req?.result?.url?.hd || req?.result?.url?.sd, { caption: req?.result?.title })
             }
-                break
+            break
             case "drive": case "gdrive": {
                 if (!/https:\/\/drive\.google\.com\/file\/d\/(.*?)\//i.test(m.text)) return m.reply(`Example : ${prefix + command} https://drive.google.com/file/d/0B_WlBmfJ3KOfdlNyVWwzVzQ1QTQ/view?resourcekey=0-P3IayYTmxJ5d8vSlf-CpUA`)
                 await m.reply("wait")
@@ -354,7 +379,7 @@ export default async function Message(hisoka, m, chatUpdate) {
                 if (req.status !== 200) return m.reply(req?.message || "error")
                 await m.reply(req?.result?.url, { fileName: req?.result?.name, mimetype: req?.result?.mimetype })
             }
-                break
+            break
             case "imgur": {
                 if (!/https:\/\/imgur\.com\/gallery\//i.test(m.text)) return m.reply(`Example : ${prefix + command} https://imgur.com/gallery/ksnRO`)
                 await m.reply("wait")
@@ -362,7 +387,7 @@ export default async function Message(hisoka, m, chatUpdate) {
                 if (req.status !== 200) return m.reply(req?.message || "error")
                 await m.reply(req?.result?.video || req?.result?.image)
             }
-                break
+            break
             case "mediafire": {
                 if (!/https?:\/\/(www\.)?mediafire\.com\/(file|download)/i.test(m.text)) return m.reply(`Example : ${prefix + command} https://www.mediafire.com/file/96mscj81p92na3r/images+(35).jpeg/file`)
                 await m.reply("wait")
@@ -370,7 +395,7 @@ export default async function Message(hisoka, m, chatUpdate) {
                 if (req.status !== 200) return m.reply(req?.message || "error")
                 await m.reply(req?.result?.link, { fileName: a?.result?.name, mimetype: a?.result?.mime })
             }
-                break
+            break
             case "pinterest": {
                 if (!m.text) return m.reply(`Example :\n\n1. ${prefix + command} Hisoka\n2. ${prefix + command} https://id.pinterest.com/pin/936748791217202640`)
                 await m.reply("wait")
@@ -385,7 +410,7 @@ export default async function Message(hisoka, m, chatUpdate) {
                     await m.reply(res.image, { caption: res.caption })
                 }
             }
-                break
+            break
             case "twitter": {
                 if (!/https?:\/\/(www\.)?(twitter|X)\.com\/.*\/status/i.test(m.text)) return m.reply(`Example : ${prefix + command} https://twitter.com/CJDLuffy/status/1683219386595721216?t=EN1LZTURgFYexHISfC3keg&s=19`)
                 await m.reply("wait")
@@ -393,7 +418,7 @@ export default async function Message(hisoka, m, chatUpdate) {
                 if (req.status !== 200) return m.reply(req?.message || "error")
                 await m.reply(req?.result?.url[0], { caption: req.result.caption })
             }
-                break
+            break
             case "ytv": {
                 if (!/(?:https?:\/\/)?(?:youtu\.be\/|(?:www\.|m\.)?(?:music\.)?youtube\.com\/(?:watch|v|embed|shorts))/i.test(m.text)) return m.reply(`Example : ${prefix + command} https://youtu.be/_EYbfKMTpRs`)
                 await m.reply("wait")
@@ -401,7 +426,7 @@ export default async function Message(hisoka, m, chatUpdate) {
                 if (req.status !== 200) return m.reply(req?.message || "error")
                 await m.reply(req.result.result[0].download, { fileName: req.result.title + ".mp4", mimetype: "video/mp4" })
             }
-                break
+            break
             case "yta": {
                 if (!/(?:https?:\/\/)?(?:youtu\.be\/|(?:www\.|m\.)?(?:music\.)?youtube\.com\/(?:watch|v|embed|shorts))/i.test(m.text)) return m.reply(`Example : ${prefix + command} https://youtu.be/_EYbfKMTpRs`)
                 await m.reply("wait")
@@ -409,7 +434,26 @@ export default async function Message(hisoka, m, chatUpdate) {
                 if (req.status !== 200) return m.reply(req?.message || "error")
                 await m.reply(req.result.result[0].download, { fileName: req.result.title + ".mp3", mimetype: "audio/mpeg" })
             }
-                break
+            break
+            case "apk": case "apkdl": {
+                if (!m.text) return m.reply(`Example : ${m.prefix + m.command} com.whatsapp`)
+                await m.reply("wait")
+                let req = await (await api("xfarr")).get("/api/download/apk", { package: m.text }, "apikey")
+                if (req.status !== 200) return m.reply(req?.message || "error")
+                let text = `${req.result.name}\n\n• Package : ${req.result.package}\n• Size : ${Func.formatSize(req.result.size)}\n• Release : ${req.result.added}\n• Updated : ${req.result.updated}\n• Version : ${req.result.file?.vername}\n• CPU Support : ${req.result.file?.hardware?.cpus.join(", ")}`
+                let msg = await m.reply(req.result.media.screenshots[0].url, { caption: text })    
+                let url = req.result.file?.path || req.result.file?.path_alt
+                await hisoka.sendMedia(m.from, url, msg, { asDocument: true, fileName: req.result.name + (Func.mime(url)).ext, mimetype: (Func.mime(url)).mime })
+            }
+            break
+            case "spotify": {
+                if (!/(?:https?:\/\/)?(?:open\.)?spotify.com(?:\/[a-zA-Z0-9\-]+)?\/track\//i.test(m.text)) return m.reply(`Example : ${m.prefix + m.command} https://open.spotify.com/track/3W4U7TEgILGpq0EmquurtH`)
+                await m.reply("wait")
+                let req = await (await api("xfarr")).get(`/api/download/spotify`, { url: Func.isUrl(m.text)[0] }, "apikey", { responseType: "arraybuffer" })
+                if (req?.status && req.status !== 200) return m.reply(req?.message || "error")
+                await m.reply(req)
+            }
+            break
 
             /* Umm, maybe for education menu */
             case "wiki": case "wikipedia": {
@@ -419,7 +463,7 @@ export default async function Message(hisoka, m, chatUpdate) {
                 if (req.status !== 200) return m.reply(req?.message || "error")
                 await m.reply(req.result?.[0]?.thumb, { caption: req.result?.[0]?.wiki })
             }
-                break
+            break
 
             /* Umm, maybe for search menu */
             case "chord": {
@@ -429,7 +473,7 @@ export default async function Message(hisoka, m, chatUpdate) {
                 if (req.status !== 200) return m.reply(req?.message || "error")
                 await m.reply(`${req.result.title}\n\n${req.result.chord}`)
             }
-                break
+            break
             case "lirik": case "lyric": {
                 if (!m.text) return m.reply(`Example : ${prefix + command} black rover`)
                 await m.reply("wait")
@@ -437,7 +481,7 @@ export default async function Message(hisoka, m, chatUpdate) {
                 if (req.status !== 200) return m.reply(req?.message || "error")
                 await m.reply(`${req.result.song}\n\n${req.result.lirik}`)
             }
-                break
+            break
 
             /* Umm, maybe for islami menu */
             case "quran": {
@@ -464,7 +508,7 @@ ${b.result.map((r) => `*${r.nomor}.*\n${r.arab}\n\n${r.latin}\n${r.indonesia}`).
                 let msg = await m.reply(text)
                 await hisoka.sendMedia(m.from, `${config.APIs.xfarr.baseURL}/api/islami/surahaudio?apikey=${config.APIs.xfarr.Key}&nomor=${Number(m.text)}`, msg, { mimetype: "audio/mpeg" })
             }
-                break
+            break
             case "nabi": case "kisahnabi": {
                 if (!m.text) return m.reply(`Example : ${prefix + command} muhammad`)
                 await m.reply("wait")
@@ -474,7 +518,7 @@ ${b.result.map((r) => `*${r.nomor}.*\n${r.arab}\n\n${r.latin}\n${r.indonesia}`).
                 req = req.result[Math.floor(Math.random() * req.result.length)]
                 await m.reply(req?.image_url, { caption: `${req.nabi} (${req.thn_kelahiran})\n\n${req.description}` })
             }
-                break
+            break
 
             /* Umm, maybe for textpro command */
             case "1977": case "abstrgold": case "advancedglow": case "americanflag": case "arcanetvseries": case "artpapercut": case "bagel": case "beach": case "berry": case "biscuit": case "blackandwhitebearmascot": case "blackpink": case "blackpink": case "blackpinkdecoratedwithroses": case "bloodfrostedglass": case "bluecircuit": case "bluefoilballoon": case "blueglass": case "bluesparklingjewelry": case "bokeh": case "box": case "bread": case "breakwall": case "brokenglass": case "businesssign": case "captainamerica": case "carvedstone": case "chocolatecake": case "chrismastgift": case "christmasbyname": case "christmascandycane": case "christmasholidaysnow": case "christmastree": case "cloud": case "cloudsky": case "colorfullluxurymetal": case "colorleddisplayscreen": case "countryflaggenerator": case "creatglossymetalic": case "creativegolden": case "cyanfoilballoon": case "cyanglass": case "cyanjewelry": case "cyansparklingjewelry": case "decorategreen": case "decoratepurple": case "decorativeglass": case "deepsemetal": case "deluxegold": case "deluxesilver": case "denim": case "doubleexposureblackwhite": case "dropwater": case "elegantwhitegold": case "embossedoncrackedsurface": case "fabric": case "fireworksparkle": case "foilballoonbirthday": case "fruitjuice": case "fullcolorballoon": case "futuristictechnologyneonlight": case "giraffe": case "glass": case "glossybluemetal": case "glossycarbon": case "glossymetal": case "glowingneonlight": case "glue": case "goldenancient": case "goldenonredsparkles": case "goldfoilballoon": case "goldsparklingjewelry": case "gradient": case "gradientgenerator": case "gradientneonlight": case "graffitiwall": case "greenfoilballoon": case "greenglass": case "greenhorror": case "greenjewelry": case "greenneon": case "greensparklingjewelry": case "halloweenfire": case "halloweenskeleton": case "happnewyearcardfireworkgif": case "happynewyeargreetingcard": case "harrypotter": case "holographic": case "honey": case "horrorblood": case "horrorgift": case "icecold": case "impressiveglitch": case "joker": case "koifish": case "lava": case "lightglowsliced": case "luxurygold": case "luxurymetallic": case "magmhot": case "makebatman": case "marble": case "marbleslabs": case "matrix": case "metaldarkgold": case "metaldarkgold": case "metallic": case "metalpurpledual": case "metalrainbow": case "minion": case "multicolorpapercut": case "naturalleaves": case "neon": case "neon": case "neondevilwings": case "neonlight": case "neonlight": case "neonlightblackpink": case "neonlightglitchgenerator": case "neonlightonbrickwall": case "neonlightwithgalaxy": case "newyearcardsbyname": case "orangeglass": case "orangejewelry": case "orangejuice": case "peridotstone": case "pinkfoilballoon": case "pinksparklingjewelry": case "plasticbagdrug": case "pottery": case "purplefoilballoon": case "purplegem": case "purpleglass": case "purpleglass": case "purplejewelry": case "purpleshinyglass": case "purplesparklingjewelry": case "quicksparklingdiamonds": case "rainbowcolorcalligraphy": case "rainbowequalizer": case "redfoilballoon": case "redglass": case "redjewelry": case "redsparklingjewelry": case "roadwarning": case "robotr2d2": case "rock": case "rustedmetal": case "rustymetal": case "sandengraved": case "sandwriting": case "sciencefiction": case "scifi": case "scifi": case "shinymetal": case "silverjewelry": case "skeleton": case "sketch": case "snowwinterholidays": case "space": case "sparklesmerrychristmas": case "steel": case "stone": case "stonecracked": case "strawberry": case "summerneonlight": case "summerwithpalmtree": case "summerysandwriting": case "thunder": case "thundergenerator": case "toxic": case "transmer": case "typography": case "ultragloss": case "underwatergenerator": case "watercolor": case "waterpipe": case "wicker": case "wonderfulgraffitiart": case "wood": case "writeinsandsummerbeach": case "writeonfoggywindow": case "xmascards": case "yellowglass": case "yellowjewelry": {
@@ -484,7 +528,7 @@ ${b.result.map((r) => `*${r.nomor}.*\n${r.arab}\n\n${r.latin}\n${r.indonesia}`).
                 if (req?.status && req.status !== 200) return m.reply(req?.message || "error")
                 await m.reply(req)
             }
-                break
+            break
             case "avengers": case "captainameric": case "cinematichorror": case "glitch": case "glitchtiktok": case "layered": case "lionmascot": case "marvelstudios": case "marvelstudiosvermetal": case "metal": case "metalgalaxy": case "metalgold": case "metalrosegold": case "metalsilver": case "ninja": case "pornhubgenerator": case "retro": case "space": case "spookyhalloween": case "steel": case "stone": case "thor": case "videogameclassicbit": case "vintagelightbulb": case "wallgraffiti": case "wolfblackwhite": case "wolfgalaxy": {
                 let [text1, text2] = m.text.split("|")
                 if (!text2) return m.reply(`Example ${prefix + command} Dika|Ardnt.`)
@@ -493,7 +537,7 @@ ${b.result.map((r) => `*${r.nomor}.*\n${r.arab}\n\n${r.latin}\n${r.indonesia}`).
                 if (req?.status && req.status !== 200) return m.reply(req?.message || "error")
                 await m.reply(req)
             }
-                break
+            break
 
             /* Umm, maybe for ephoto command */
             case "1917": case "3dhologram": case "3dtexteffect": case "3dtextstyle": case "3dcrack": case "3dcubictext": case "3dgradient": case "3dgradient2": case "3dsand": case "3dshinymetallic": case "3dwoodenlogo": case "3dwoodentext": case "3dchristmas": case "3dbeach": case "3dpapercut": case "3dunderwater": case "aovwallpaper2": case "aovwallpaper3": case "aovwallpaper4": case "aovwallpapers": case "advancedglow": case "americanflag": case "amongus": case "angelwing": case "announcementofwinning": case "aovarena": case "aovbanner": case "avatar3q360": case "avatardota": case "avatarlol": case "avatarlol2": case "blackpink": case "balloontext": case "bannerlol": case "battlefield": case "beautifulgold": case "birthdaycake": case "birthdaycake2": case "birthdaycake3": case "birthdaycake3": case "birthdaycake4": case "blackpinklogo": case "blackpinkneon": case "bloodtext": case "bloodwritingtext": case "bokehtext": case "borderproject": case "csgo": case "csgocover": case "caketext2": case "caketext": case "candytext": case "capercut": case "cardshalloween": case "chocolate": case "christmasball": case "christmasnewyear2": case "christmaseffect": case "christmasnewyear": case "christmasseason": case "christmassnow": case "christmasvideo": case "chrometext": case "cloudtext": case "coffee": case "colortext": case "colorfulglowing": case "colorfultext": case "covergraffiti": case "createwater": case "createtext": case "crossfire": case "crossfirecover": case "cyberhunter": case "dance": case "darkgreentypography": case "diamondtext": case "dota2cover": case "doubleexposure": case "dragonball": case "dragonsteel": case "embroider": case "fabrictext": case "firetext": case "firework": case "firework": case "flamelettering": case "foggyrainy": case "freefire": case "freefireavatar": case "freefirefb": case "funnyminion": case "galaxy": case "galaxytext": case "gemstone": case "generalexamcrank": case "glittergold": case "glossychrome": case "goldbutton": case "goldpurple": case "goldtext": case "goldtext2": case "goldtextgenerators": case "goldtext3": case "graffititext": case "graffititext5": case "graffiticolor": case "graffitilettering": case "greenbrush": case "greenneon": case "halloween": case "halloweenbatstext": case "halloweenfire": case "halloweenvideo": case "heart": case "heartcup": case "hollywoodwalk": case "horrorcemeterygate": case "icetext": case "joker": case "jeanfabric": case "jewel": case "lok(aov)": case "lolpentakill": case "leagueofangels": case "leagueofking": case "leagueofkings": case "ligaturesfromleaves": case "lighteffects": case "lol": case "logoastronaut": case "lolavatar": case "lolbanner": case "lolcover": case "lolfb": case "lolwp": case "lolwp2": case "lovecard": case "luxurylogo": case "magictext": case "matrixtext": case "merrychristmas": case "metal": case "metalavatar": case "metalmascots": case "metalblue": case "metallogo": case "metalstartext": case "metaltext": case "metallic": case "milkcaketext": case "minimallogo": case "mobilelegendswallpaper": case "moderngold": case "moderngoldred": case "moderngoldsilver": case "moderngold3": case "moderngold4": case "moderngold5": case "musicequalizer": case "nationalflag": case "neonlight": case "neontext": case "neontext3": case "neontextlight": case "neondevilwings": case "newyear": case "nigeriaflag": case "noel": case "onepiece": case "overwatchcover": case "overwatchwallpaper": case "overwatchhero": case "pubgbirthday": case "pubglogo2": case "pubglogo3": case "pubgchar": case "pubgcover": case "pubgfb": case "pubgglitch": case "pubglogo": case "pubgteam": case "paintsplatter": case "party": case "plasmatexteffects": case "purpletext": case "retrotext": case "roadpaint": case "royaltext": case "santaclaus": case "shadowtext": case "snake": case "snowontext": case "starwars": case "starsnight": case "starsnight2": case "summerbeach2": case "sunlightshadow": case "teamlogo": case "teamfighttactics": case "textgalaxy": case "textgraffiti3d": case "texthalloween": case "texthalloween2": case "textheartflashlight": case "textlight": case "textcake": case "textchristmas": case "textmetal": case "textoncloth": case "thundertext": case "typography": case "underwatertext": case "valentinesday": case "warface": case "water3dtext": case "watertext": case "wingsgalaxy": case "wingstext": case "wooden3d": case "writegalaxy": case "writegalaxy2": case "writegoldletters": case "writingblackboard": case "yasuologo": case "zodiac": case "zombie3d": case "angelwings": case "animationsbear": case "anonymoushacker": case "avataraov": case "avatarrov": case "avatargold": case "balloon": case "bear": case "birthdaycake3": case "birthdaycards": case "birthdayfoilballoon": case "brokenglass": case "cakes": case "cartoongraffiti": case "chalkontheblackboard": case "chocolate2": case "cloudsinthesky": case "colorfulangel": case "covercf": case "coverlol": case "deleting": case "digitalglitch": case "digitaltiger": case "facebook": case "foggyglass": case "football": case "galaxylogo": case "gaminglogo": case "gaminglogofps": case "girlgamer": case "glass": case "glowingtext": case "goldletters": case "graffitiletters": case "happywomensday": case "horrorletters": case "horrortext": case "impressiveleaves": case "inthesky": case "incandescentbulbs": case "leafautumn": case "lettersontheleaves": case "lightgalaxy": case "lightsignatures": case "logointro": case "logoteam": case "lolavatar2": case "luxurygold": case "mascotlogo": case "maskotteamlogo": case "mechanical": case "metalborder": case "metalliceffect": case "namesonthesand": case "nature": case "neonglitch": case "neonblue": case "neonlogo": case "newyearvideo": case "papercut": case "pavement": case "personalizedqueen": case "pig": case "pixelglitch": case "puppycute": case "realisticcloud": case "realisticembroidery": case "rotationlogo": case "ruby​​stone": case "signatureattachment": case "silvertext": case "snow3d": case "summerbeach": case "summerysand": case "sweetlove": case "tattoosignature": case "tattoos": case "technology": case "texteffectsnight": case "tmaker": case "vibrantfireworks": case "vintagetelevision": case "wallpapermobile": case "warningsign": case "watercolor": case "womensday": case "wordgreenflares": case "wordgreenlight": case "zodiacwallpaper": {
@@ -503,7 +547,7 @@ ${b.result.map((r) => `*${r.nomor}.*\n${r.arab}\n\n${r.latin}\n${r.indonesia}`).
                 if (req?.status && req.status !== 200) return m.reply(req?.message || "error")
                 await m.reply(req)
             }
-                break
+            break
             case "3dstone": case "3dlightbulb": case "3dwood": case "amongusbanner": case "apexlegend": case "barcashirt": case "callofduty": case "captainamerica": case "companylogo": case "companylogo2": case "floralluxury": case "footballlogo": case "glitter": case "juventusshirt": case "latestspace3d": case "letters": case "logo3dmetal": case "lolytbanner": case "lovelyfloral": case "marvels": case "metalliccover": case "neontext2": case "overwatchavatar": case "overwatchytbanner": case "pubglogo": case "pubgytbanner": case "polygonlogo": case "pornhub": case "premierleaguecup": case "quotesimages": case "shirtrealmadrid": case "steeltext": case "tiktok": case "writestatus": case "balloonslove": case "banneraov": case "blackandwhite": case "classlogo": case "footballshirtmessi": case "girlgraffiti": case "gradientlogo": case "graffitithewall": case "impressiveanime": case "letterlogos": case "logoavengers": case "logowolf": case "logoaccording": case "logogaming": case "logomascot": case "loveballoons": case "metallicglass": case "pencilsketch": case "shirtfootball": case "steellettering": {
                 let [text1, text2] = m.text.split("|")
                 if (!text2) return m.reply(`Example ${prefix + command} Dika|Ardnt.`)
@@ -512,7 +556,7 @@ ${b.result.map((r) => `*${r.nomor}.*\n${r.arab}\n\n${r.latin}\n${r.indonesia}`).
                 if (req?.status && req.status !== 200) return m.reply(req?.message || "error")
                 await m.reply(req)
             }
-                break
+            break
 
             /* Umm, maybe for photooxy command */
             case "3dglowing": case "3dnature": case "3drainbow": case "3dsummer": case "3dwoodblack": case "between": case "birthdaycake": case "blackpink": case "burnpaper": case "butterfly": case "candy": case "carvedwood": case "coffeecup": case "coffeecup2": case "crisp": case "crossfire": case "csgo": case "cup": case "cupsmile": case "fabric": case "flaming": case "flowerheart": case "flowertypography": case "fur": case "glowrainbow": case "gradient": case "graffiti": case "greenleaves": case "harrypotter": case "hellokitty": case "leaves": case "lovepicture": case "lovetext": case "luxury": case "metallicglow": case "modernmetal": case "multimaterial": case "naruto": case "naturetypography": case "neondarkmetal": case "neonglow": case "neonmetallic": case "nightsky": case "partyneon": case "poly": case "raindrops": case "rainbowshine": case "romanticlove": case "scary": case "shadowtext": case "silk": case "skriking3d": case "smoke": case "smoketypography": case "sweetcandy": case "underfall": case "underflower": case "undergrass": case "undermatrix": case "underwhite": case "underwater": case "vintage": case "warface": case "watermelon": case "whitestone": case "wolfmetal": case "woodheart": case "woodenboards": case "yellowroses": {
@@ -522,7 +566,7 @@ ${b.result.map((r) => `*${r.nomor}.*\n${r.arab}\n\n${r.latin}\n${r.indonesia}`).
                 if (req?.status && req.status !== 200) return m.reply(req?.message || "error")
                 await m.reply(req)
             }
-                break
+            break
             case "arcade8-bit": case "battlefield4rising": case "glitchtiktok": case "pubg": case "google": {
                 let [text1, text2] = m.text.split("|")
                 if (!text2) return m.reply(`Example ${prefix + command} Dika|Ardnt.`)
@@ -531,7 +575,7 @@ ${b.result.map((r) => `*${r.nomor}.*\n${r.arab}\n\n${r.latin}\n${r.indonesia}`).
                 if (req?.status && req.status !== 200) return m.reply(req?.message || "error")
                 await m.reply(req)
             }
-                break
+            break
 
             /* Umm, maybe for non command */
             default:
