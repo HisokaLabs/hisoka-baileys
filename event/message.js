@@ -140,6 +140,7 @@ export default async function Message(hisoka, m, chatUpdate) {
             break
             case "setpp": case "setprofile": case "seticon": {
                 if (m.isOwner && !m.isGroup) {
+                    let media = await quoted.download()
                     if (/full/i.test(m.text)) await hisoka.setProfilePicture(hisoka?.user?.id, media, "full")
                     else if (/(de(l)?(ete)?|remove)/i.test(m.text)) await hisoka.removeProfilePicture(hisoka.decodeJid(hisoka?.user?.id))
                     else await hisoka.setProfilePicture(hisoka?.user?.id, media, "normal")
