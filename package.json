@@ -38,9 +38,9 @@
   "devDependencies": {
     "@adiwajshing/keyed-db": "^0.2.4",
     "axios": "^1.4.0",
+    "jimp": "^0.16.13",
     "link-preview-js": "^3.0.4",
     "open": "^8.4.2",
-    "sharp": "^0.30.7",
     "qrcode-terminal": "0.12.0"
   }
 }

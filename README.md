@@ -43,9 +43,6 @@ apt update && apt upgrade -y
 ```sh
 apt install nodejs git ffmpeg wget curl zip -y
 ```
-```sh
-apt install libvips binutils build-essential -y
-```
 
 ### Speedtest Install
 ```sh
@@ -156,20 +153,11 @@ or type your number in [`here`](https://github.com/Hisoka-Morrou/hisoka-baileys/
 node index.js --pairing-code
 ```
 
-## Login Mobile API
-```sh
-node index.js --mobile
-```
-
 ### Note
 
 This code is in no way affiliated with WhatsApp. Use at your own discretion. Don't spam this.
 
 This code was produced based on the baileys library and it is still under development.
-
-For Login Mobile API
-* Not recommended for use, can cause a ban if you are logged in
-* tidak direkomendasikan untuk digunakan, bisa menyebabkan banned jika sudah login
 
 # Donate to the project.
 * [`PayPal`](https://www.paypal.me/Cakhaho)
