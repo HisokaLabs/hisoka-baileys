@@ -360,7 +360,7 @@ export default async function Message(hisoka, m, chatUpdate) {
                 await m.reply("wait")
                 let req = await (await api("xfarr")).get("/api/download/instagram", { url: Func.isUrl(m.text)[0] }, "apikey")
                 if (req.status !== 200) return m.reply(req?.message || "error")
-                for (let url of req.result.media) {
+                for (let url of req.result) {
                     m.reply(url, { caption: req?.result?.caption })
                 }
             }
